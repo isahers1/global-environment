@@ -58,3 +58,9 @@ class integer:
                 return False
         else: 
             return False
+
+    def power (self, input, exp):
+        object = integer(1)
+        for i in range(exp):
+            object.value = object.value * input
+        return object 
