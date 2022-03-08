@@ -7,15 +7,19 @@ exec(compile(source=open('group.py').read(), filename='group.py', mode='exec'))
 exec(compile(source=open('integer.py').read(), filename='integer.py', mode='exec'))
 
 class Proof:
-    def __init__(self, label):
+    def __init__(self, label, goal): # make goal optional
         self.label = label
+        self.goal = goal # this is an implies
         self.steps = []
         self.justifications = []
         self.environment = {} # add strings names to environment for parsing 
         self.depth = 0
-        self.currAssumption = []
+        self.currAssumption = [goal.assum]
         self.show() 
     
+    def qed(self):
+        return self.goal.conc in self.steps
+
     def undo(self):
         self.steps = self.steps[:-1]
         self.justifications = self.justifications[:-1]
@@ -57,7 +61,7 @@ class Or:
         if check1 and check2 and implies1.conc==implies2.conc:
             return implies1.conc
 
-class Implies:
+class Implies: # expand a little more functionality
     def __init__(self, assum, conc):
         self.assum = assum
         self.conc = conc

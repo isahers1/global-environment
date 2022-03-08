@@ -4,6 +4,7 @@ class integer:
     def __init__(self, input):
         if isinstance(input, str):
             self.value = "("+input+")"
+    
     def __repr__(self):
         return "integer(" + self.value + ")"
 
