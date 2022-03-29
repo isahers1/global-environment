@@ -43,7 +43,12 @@ class element:
     def addProperty(self, property, propertyName):
         self.elementProperties[propertyName] = property
 
+#My current vision is to have an arbitrary element class and an existential element class
+#A for all is an equation including an arbitrary element, and a there exists is an equation including an existential element
 
+#class exists(element):
+
+#class arbitrary(element):
 
 # WE NEED TO AGREE ON EQUATION/STATEMENT/PROPERTY CLASSES BEFORE IMPLEMENTING THE BELOW CLASSES
 """

@@ -72,22 +72,33 @@ class Implies: # expand a little more functionality
 
 class Not:
     def __init__(self, arg):
-        #Demorgans Law
-        if isinstance(arg,And):
-            arg = Or(Not(arg.arg1), Not(arg.arg2))
-        if isinstance(arg,Or):
-            arg = And(Not(arg.arg1), Not(arg.arg2))
-
-        #DNE
-        if isinstance(arg,Not):
-            arg = arg.arg
-
         self.arg = arg
 
-    def elim(self,num,implies1,implies2):
-        check1 = isinstance(implies1, Implies) and implies1.assum==self.arg1
-        check2 = isinstance(implies2, Implies) and implies2.assum==self.arg2
-        if check1 and check2 and implies1.conc==implies2.conc:
-            return implies1.conc
+    def elim(self, contradiction):
+        if self.arg == contradiction:
+            return Bottom()
 
-#for all and there exists should be represented by a sub environment, so not a logic object?
+class Bottom:
+    def elim(self, conclusion):
+        return conclusion
+
+class Eq:
+    def __init__(self,LHS,RHS):
+        self.LHS = LHS
+        self.RHS = RHS
+
+def reduce(exp):
+    if isinstance(exp, Not):
+        if isinstance(exp.arg, Not):
+            exp=exp.arg.arg #DNE
+        if isinstance(exp.arg, And):
+            exp=Or(Not(exp.arg.arg1), Not(exp.arg.arg2)) #Demorgan's Law
+        if isinstance(exp.arg, Or):
+            exp=And(Not(exp.arg.arg1), Not(exp.arg.arg2)) #Demorgan's Law
+    if isinstance(exp, Implies):
+        if isinstance(exp.conc, Bottom):
+            exp=Not(exp.assum)
+    return exp
+
+#My current vision is to have an arbitrary element class and an existential element class
+#A for all is an equation including an arbitrary element, and a there exists is an equation including an existential element

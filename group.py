@@ -23,7 +23,7 @@ class group:
         return self.groupName == other.groupName
     def __mul__(self,other): # group cartesian product. Worry about this later
         newName = self.groupName + "x" + other.groupName
-        newProperties = list(set(self.properties) & set(other.properties))
+        newProperties = list(set(self.properties) & set(other.properties)) #sadly cartesian products don't work this way :(
         return group(newName, [self.binaryOperator,other.binaryOperator], newProperties)
 
     # group functions
