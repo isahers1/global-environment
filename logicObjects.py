@@ -195,6 +195,43 @@ class Proof:
         self.steps += [ret]
         self.justifications += ["identity elimination "] 
         self.show()
+    
+    def splitPowerAddition(self,power):
+        """
+        Simplify power objects: Given an expression e^a+b, convert to e^a*e^b. Given an expression e^a*b=(e^a)^b
+        :param power: the power object with addition in exponent to be modified
+        """  
+        element = self.element
+        exp=self.exponent
+        l=exp.split("+")
+        if len(l)==1:
+            raise Exception ("No power addition to be split apart") 
+        multList=[]
+        for i in l: 
+            elem=power(element,i)
+            multList.append(elem)
+        self.steps += [Mult(multList)]
+        self.justifications += ["split up power with addition in exponents"] 
+        self.show()       
+             
+
+    def splitPowerMult(self,power):
+        """
+        Simplify power objects: Given an expression e^a*b=(e^a)^b
+        :param lineNum: the power object with mult in exponent to be modified
+        """  
+        element = self.element
+        exp=self.exponent
+        l=exp.split("*")
+        if len(l)==1:
+            raise Exception ("No power multiplication to be split apart") 
+        elem=element
+        for i in l: 
+            e=power(elem,i)
+            elem=e
+        self.steps += [elem]
+        self.justifications += ["split up power with multiplication in exponents"] 
+        self.show()
 
 class Mult:
     def __init__(self, elemList):
