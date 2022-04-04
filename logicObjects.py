@@ -1,6 +1,8 @@
 import copy
 from dataclasses import replace
 
+from element import arbitrary
+
 exec(compile(source=open('element.py').read(), filename='element.py', mode='exec'))
 exec(compile(source=open('environment.py').read(), filename='environment.py', mode='exec'))
 exec(compile(source=open('group.py').read(), filename='group.py', mode='exec'))
@@ -77,17 +79,127 @@ class Proof:
         else:
             raise Exception (f"Neither of {str(lineNum1)}, {str(lineNum2)} are an implies statement")
 
+    def identElimRHS(self, lineNum):
+        """"
+        Remove all instances of the identity from an equation
+        :param lineNum: the line of the proof to be modified on the right hand side
+        """
+        evidence = copy.deepcopy(self.steps[lineNum])
+        rhsevidence = evidence.RHS
+        if isinstance(rhsevidence,Mult):
+            l = copy.deepcopy(rhsevidence.prodcuts)
+            try:
+                while True:
+                    l.remove(evidence.parentgroup.identity_identifier)
+            except ValueError:
+                pass
+            return Mult(l)
+        else:
+            raise Exception (f"The right hand side on line {lineNum} is not a Mult object")
 
+    def identElimLHS(self, lineNum):
+        """"
+        Remove all instances of the identity from an equation
+        :param lineNum: the line of the proof to be modified on the left hand side
+        """
+        evidence = copy.deepcopy(self.steps[lineNum])
+        lhsevidence = evidence.LHS
+        if isinstance(lhsevidence,Mult):
+            l = copy.deepcopy(lhsevidence.prodcuts)
+            try:
+                while True:
+                    l.remove(evidence.parentgroup.identity_identifier)
+            except ValueError:
+                pass
+            return Mult(l)
+        else:
+            raise Exception (f"The left hand side on line {lineNum} is not a Mult object")
 
-
-
-
-
-
-
-
-
-
+    def inverseElimRHS(self,lineNum):
+        """
+        finds the first pair of group element and its inverse and returns the group element
+        :param lineNum: the line of the proof to be modified on the right hand side
+        """
+        evidence = copy.deepcopy(self.steps[lineNum]).RHS
+        if isinstance(evidence,Mult): 
+            l = evidence.products.copy()
+            lawApplied = False
+            for i in range(len(l)-1):
+                if isinstance(l[i],element) and isinstance(l[i+1],inverse) and (l[i].elementName == l[i+1].elementName):
+                    group = l[i].parentGroups[0] # how to deal with multiple groups?
+                    l[i] = group.identity_identifier
+                    newProducts = Mult(l[:i+1]+l[i+2:])
+                    lawApplied=True
+                    break
+                elif isinstance(l[i],inverse) and isinstance(l[i+1],element) and (l[i].elementName == l[i+1].elementName):
+                    group = l[i+1].parentGroups[0] # how to deal with multiple groups?
+                    l[i] = group.identity_identifier
+                    newProducts = Mult(l[:i+1]+l[i+2:]) # should we include 'e' in the Mult object?
+                    lawApplied=True
+                    break
+            if lawApplied==False:
+                raise Exception (f"Inverse laws can't be applied on line {lineNum}")
+        self.steps += [newProducts]
+        self.justifications += [f'Right hand side inverse elimination on line {lineNum}'] 
+        self.show()
+    
+    def inverseElimLHS(self,lineNum):
+        """
+        finds the first pair of group element and its inverse and returns the group element
+        :param lineNum: the line of the proof to be modified on the left hand side
+        """
+        evidence = copy.deepcopy(self.steps[lineNum]).LHS
+        if isinstance(evidence,Mult): 
+            l = evidence.products.copy()
+            lawApplied = False
+            for i in range(len(l)-1):
+                if isinstance(l[i],element) and isinstance(l[i+1],inverse) and (l[i].elementName == l[i+1].elementName):
+                    group = l[i].parentGroups[0] # how to deal with multiple groups?
+                    l[i] = group.identity_identifier
+                    newProducts = Mult(l[:i+1]+l[i+2:])
+                    lawApplied=True
+                    break
+                elif isinstance(l[i],inverse) and isinstance(l[i+1],element) and (l[i].elementName == l[i+1].elementName):
+                    group = l[i+1].parentGroups[0] # how to deal with multiple groups?
+                    l[i] = group.identity_identifier
+                    newProducts = Mult(l[:i+1]+l[i+2:]) # should we include 'e' in the Mult object?
+                    lawApplied=True
+                    break
+            if lawApplied==False:
+                raise Exception (f"Inverse laws can't be applied on line {lineNum}")
+        self.steps += [newProducts]
+        self.justifications += [f'Left hand side inverse elimination on line {lineNum}'] 
+        self.show()
+    
+    ## For all and there exists elimination
+     
+    def forallElim(self, lineNum, replacements): 
+        """
+        Given an expression forall(a,b,statement), forallElim substitutes a with another input variable to create a new forall statement
+        :param lineNum: The line number of the line that showed the original forall statement 
+        :param replacements: the list of elements to replace the existential elements
+        """
+        evidence = copy.deepcopy(self.steps[lineNum])
+        if isinstance(evidence, forall) == False:
+            raise Exception(f"There is no forall statmenent on line {lineNum}")
+        evidence.replace(replacements)
+        self.steps += [evidence.expr]
+        self.justifications += [f'For all elimination on line {lineNum}'] 
+        self.show() 
+    
+    def thereexistsElim(self, lineNum, replacements): # We can only do this once!
+        """
+        Given an expression forall(a,b,statement), forallElim substitutes a with another input variable to create a new forall statement
+        :param lineNum: The line number of the line that showed the original forall statement 
+        :param replacements: the list of elements to replace the existential elements
+        """
+        evidence = copy.deepcopy(self.steps[lineNum])
+        if isinstance(evidence, thereexists) == False:
+            raise Exception(f"There is no there exists statmenent on line {lineNum}")
+        evidence.replace(replacements)
+        self.steps += [evidence.expr]
+        self.justifications += [f'There exists elimination on line {lineNum}'] 
+        self.show() 
 
     ## Multiplication manipulation
     def leftMult (self, elem, lineNum):
@@ -100,7 +212,7 @@ class Proof:
         if isinstance(eq, Eq) == False:
             raise Exception (f"Line {lineNum} is not an equation")
         product = self.MultElem(elem, eq.LHS)
-        result = Eq(product, self.MultElem(elem,eq.RHS))
+        result = Eq(product, self.MultElem(elem,eq.RHS), eq.parentgroup)
         self.steps += [result]
         self.justifications += ['Left multiply line {lineNum} by ' +str(elem) ] 
         self.show()
@@ -115,7 +227,7 @@ class Proof:
         if isinstance(eq, Eq) == False:
             raise Exception (f"Line {lineNum} is not an equation")
         product = self.MultElem(eq.LHS, elem)
-        result = Eq(product, self.MultElem(eq.RHS,elem))
+        result = Eq(product, self.MultElem(eq.RHS,elem), eq.parentgroup)
         self.steps += [result]
         self.justifications += [f'Right multiply line {lineNum} by ' +str(elem)] 
         self.show()
@@ -196,8 +308,8 @@ class Proof:
         """
         l1 = self.steps[lineNum1]
         l2 = self.steps[lineNum2]
-        if l1.RHS == l2.RHS:
-            self.steps += [Eq(l1.LHS,l2.LHS)]
+        if l1.RHS == l2.RHS and l1.parentgroup == l2.parentgroup:
+            self.steps += [Eq(l1.LHS,l2.LHS, l1.parentgroup)]
             self.justifications += [f"Equations with same right side on lines {str(lineNum1)}, {str(lineNum2)}"]
             self.show()
         else:
@@ -211,8 +323,8 @@ class Proof:
         """
         l1 = self.steps[lineNum1]
         l2 = self.steps[lineNum2]
-        if l1.LHS == l2.LHS:
-            self.steps += [Eq(l1.RHS,l2.RHS)]
+        if l1.LHS == l2.LHS and l1.parentgroup == l2.parentgroup:
+            self.steps += [Eq(l1.RHS,l2.RHS, l1.parentgroup)]
             self.justifications += [f"Equations with same left side on lines {str(lineNum1)}, {str(lineNum2)}"]
             self.show()
         else:
@@ -242,7 +354,7 @@ class Proof:
             if l1==[]:
                 raise Exception ("identity can't be applied")
             newProduct = Mult(l1)
-            ret = Eq(newProduct,evidence.RHS)
+            ret = Eq(newProduct,evidence.RHS,evidence.parentgroup)
 
         self.steps += [ret]
         self.justifications += ["identity elimination "] 
@@ -272,7 +384,7 @@ class Proof:
             if l1==[]:
                 raise Exception ("identity can't be applied")
             newProduct = Mult(l1)
-            ret = Eq(evidence.LHS,newProduct)
+            ret = Eq(evidence.LHS,newProduct,evidence.parentgroup)
 
         self.steps += [ret]
         self.justifications += ["identity elimination "] 
@@ -349,9 +461,10 @@ class Bottom:
         return conclusion
 
 class Eq:
-    def __init__(self,LHS,RHS):
+    def __init__(self,LHS,RHS,pg):
         self.LHS = LHS
         self.RHS = RHS
+        self.parentgroup = pg
 
     def __repr__(self):
         return str(self.LHS) + ' = ' + str(self.RHS)
@@ -365,7 +478,7 @@ class Eq:
             return False
 
     def replace(self, var, expr):
-        return Eq(self.LHS.replace(var,expr), self.RHS.replace(var,expr))
+        return Eq(self.LHS.replace(var,expr), self.RHS.replace(var,expr), self.parentgroup)
 
 def reduce(exp):
     if isinstance(exp, Not):
@@ -433,3 +546,22 @@ class thereexists:
         else:
             raise Exception("Replacements is not the same length as the list of existential elements")
 
+## Special types of elements/groups
+
+class identity(element):
+    def __init__(self, elementName, pg):
+        super().__init__(elementName, pg)
+        lhs = Mult([arbitrary('x',pg),elementName]) # self or elementName?
+        rhs = Mult([arbitrary('x',pg)])
+        eq = Eq(lhs,rhs,pg)
+        idnty = forall([arbitrary('x',pg)], pg, eq)
+        pg.addElementProperty(idnty,elementName)
+
+class inverse(element):
+    def __init__(self, elementName, pg):
+        super().__init__(elementName, pg)
+        lhs = Mult([arbitrary('x',pg),elementName]) # self or elementName?
+        rhs = Mult([arbitrary('x',pg)])
+        eq = Eq(lhs,rhs,pg)
+        idnty = forall([arbitrary('x',pg)], pg, eq)
+        pg.addElementProperty(idnty,elementName)

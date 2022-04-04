@@ -61,16 +61,8 @@ class arbitrary(element):
         return  "Existential element " + self.elementName + " in group" + self.parentGroups[0].groupName # can only belong to one group
 
 # WE NEED TO AGREE ON EQUATION/STATEMENT/PROPERTY CLASSES BEFORE IMPLEMENTING THE BELOW CLASSES
-"""
-class identity(element):
-    def __init__(self, elementName, pg):
-        super().__init__(elementName, pg)
-        lh = equation([element('x',pg),'*',self],pg)
-        rh = equation([element('x',pg)],pg)
-        stmnt = statement(lh,rh,pg)
-        idnty = forall([element('x',pg)],stmnt,pg)
-        pg.addElementProperty(idnty,elementName) # need to change
 
+"""
 class generator(element):
     def __init__(self, elementName, pg):
         super().__init__(elementName, pg)
