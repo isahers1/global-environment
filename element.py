@@ -46,9 +46,19 @@ class element:
 #My current vision is to have an arbitrary element class and an existential element class
 #A for all is an equation including an arbitrary element, and a there exists is an equation including an existential element
 
-#class exists(element):
+class existential(element):
+    def __init__(self, elementName, pg):
+        super().__init__(elementName, pg)
+    
+    def fullDescription(self):
+        return  "Arbitrary element " + self.elementName + " in group" + self.parentGroups[0].groupName # can only belong to one group
 
-#class arbitrary(element):
+class arbitrary(element):
+    def __init__(self, elementName, pg):
+        super().__init__(elementName, pg)
+    
+    def fullDescription(self):
+        return  "Existential element " + self.elementName + " in group" + self.parentGroups[0].groupName # can only belong to one group
 
 # WE NEED TO AGREE ON EQUATION/STATEMENT/PROPERTY CLASSES BEFORE IMPLEMENTING THE BELOW CLASSES
 """

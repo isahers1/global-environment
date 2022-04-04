@@ -1,5 +1,5 @@
-from cv2 import AgastFeatureDetector_AGAST_7_12d
 import copy
+from dataclasses import replace
 
 exec(compile(source=open('element.py').read(), filename='element.py', mode='exec'))
 exec(compile(source=open('environment.py').read(), filename='environment.py', mode='exec'))
@@ -53,17 +53,56 @@ class Proof:
             l.append(element2)
         return Mult(l)
     
+    def modus(self, lineNum1, lineNum2):
+        """
+        modus pones: given A->B and A, the function concludes B and add it as a new line in the proof
+        lineNum1 and lineNum2: one line in the proof where the person showed A->B and one line the proof where the person showed A
+        """
+        ev1 = self.steps[lineNum1]
+        ev2 = self.steps[lineNum2]
+        if isinstance(ev1, Implies): 
+            A = ev1.assum
+            B = ev1.conc
+            if A == ev2: 
+                self.steps += [B]
+                self.justifications += [f'Modus Ponens on {str(lineNum1)}, {str(lineNum2)}'] 
+                self.show() 
+        elif isinstance(ev2, Implies):
+            A = ev2.assum
+            B = ev2.conc
+            if A == ev1: 
+                self.steps += [B]
+                self.justifications += [f'Modus Ponens on {str(lineNum2)}, {str(lineNum1)}'] 
+                self.show()
+        else:
+            raise Exception (f"Neither of {str(lineNum1)}, {str(lineNum2)} are an implies statement")
+
+
+
+
+
+
+
+
+
+
+
+
+
+    ## Multiplication manipulation
     def leftMult (self, elem, lineNum):
         """
         Left Multiply both sides of an equation with the input element 
         :param lineNum: the equation in the proof that is to be modified 
         :param elem: the element to left Multiply with 
         """
-        elem2 = copy.deepcopy(self.steps[lineNum])
-        product = self.MultElem(elem, elem2.LHS)
-        result = Eq(product, self.MultElem(elem,elem2.RHS))
+        eq = copy.deepcopy(self.steps[lineNum])
+        if isinstance(eq, Eq) == False:
+            raise Exception (f"Line {lineNum} is not an equation")
+        product = self.MultElem(elem, eq.LHS)
+        result = Eq(product, self.MultElem(elem,eq.RHS))
         self.steps += [result]
-        self.justifications += ['Left Multiply by ' +str(elem) ] 
+        self.justifications += ['Left multiply line {lineNum} by ' +str(elem) ] 
         self.show()
 
     def rightMult (self, elem, lineNum):
@@ -72,11 +111,13 @@ class Proof:
         :param lineNum: the line in the proof that is to be modified 
         :param elem: the element to right Multiply 
         """
-        elem1 = copy.deepcopy(self.steps[lineNum])
-        product = self.MultElem(elem1.LHS, elem)
-        result = Eq(product, self.MultElem(elem1.RHS,elem))
+        eq = copy.deepcopy(self.steps[lineNum])
+        if isinstance(eq, Eq) == False:
+            raise Exception (f"Line {lineNum} is not an equation")
+        product = self.MultElem(eq.LHS, elem)
+        result = Eq(product, self.MultElem(eq.RHS,elem))
         self.steps += [result]
-        self.justifications += ['Right Multiply by ' +str(elem)] 
+        self.justifications += [f'Right multiply line {lineNum} by ' +str(elem)] 
         self.show()
 
     ##power methods 
@@ -85,8 +126,8 @@ class Proof:
         Given an expression like e^a where a is a python integer, return a mult object equivalent to e^a
         :param power: the power to be converted to mult
         """   
-        exp=self.exponent   
-        element = self.element 
+        exp=power.exponent   
+        element = power.element 
         multList=[]
         for i in range(exp):
             multList.append(element)
@@ -108,32 +149,74 @@ class Proof:
         self.steps += [result]
         self.justifications += ['Convert multiplications to equivalent powers'] 
         self.show()
+
+    def splitPowerAddition(self,power):
+        """
+        Simplify power objects: Given an expression e^a+b, convert to e^a*e^b. Given an expression e^a*b=(e^a)^b
+        :param power: the power object with addition in exponent to be modified
+        """  
+        element = self.element
+        exp=self.exponent
+        l=exp.split("+")
+        if len(l)==1:
+            raise Exception ("No power addition to be split apart") 
+        multList=[]
+        for i in l: 
+            elem=power(element,i)
+            multList.append(elem)
+        self.steps += [Mult(multList)]
+        self.justifications += ["split up power with addition in exponents"] 
+        self.show()       
+             
+
+    def splitPowerMult(self,power):
+        """
+        Simplify power objects: Given an expression e^a*b=(e^a)^b
+        :param lineNum: the power object with mult in exponent to be modified
+        """  
+        element = self.element
+        exp=self.exponent
+        l=exp.split("*")
+        if len(l)==1:
+            raise Exception ("No power multiplication to be split apart") 
+        elem=element
+        for i in l: 
+            e=power(elem,i)
+            elem=e
+        self.steps += [elem]
+        self.justifications += ["split up power with multiplication in exponents"] 
+        self.show()
     
-    def rightSidesEq(self, line1, line2):
+    ## Identity and equality elimination
+    def rightSidesEq(self, lineNum1, lineNum2):
         """
         If two sides have the same right side, then set left sides to equal in a new line
         :param line1: the first line with same right side
         :param line2: the second line with the same right side
         """
-        l1 = self.steps[line1]
-        l2 = self.steps[line2]
+        l1 = self.steps[lineNum1]
+        l2 = self.steps[lineNum2]
         if l1.RHS == l2.RHS:
             self.steps += [Eq(l1.LHS,l2.LHS)]
-            self.justifications += [f"Equations with same right side on lines {str(line1)}, {str(line2)}"]
+            self.justifications += [f"Equations with same right side on lines {str(lineNum1)}, {str(lineNum2)}"]
             self.show()
+        else:
+            raise Exception (f"The equations on lines {str(lineNum1)}, {str(lineNum2)} do not have the same right sides")
 
-    def leftSidesEq(self, line1, line2):
+    def leftSidesEq(self, lineNum1, lineNum2):
         """
-        If two sides have the same left side, then set left sides to equal in a new line
+        If two sides have the same left side, then set right sides to equal in a new line
         :param line1: the first line with same left side
         :param line2: the second line with the same left side
         """
-        l1 = self.steps[line1]
-        l2 = self.steps[line2]
+        l1 = self.steps[lineNum1]
+        l2 = self.steps[lineNum2]
         if l1.LHS == l2.LHS:
             self.steps += [Eq(l1.RHS,l2.RHS)]
-            self.justifications += [f"Equations with same left side on lines {str(line1)}, {str(line2)}"]
+            self.justifications += [f"Equations with same left side on lines {str(lineNum1)}, {str(lineNum2)}"]
             self.show()
+        else:
+            raise Exception (f"The equations on lines {str(lineNum1)}, {str(lineNum2)} do not have the same left sides")
 
     def identleft(self, lineNum):
         """
@@ -188,7 +271,6 @@ class Proof:
                 # else we can't apply identity elimination 
             if l1==[]:
                 raise Exception ("identity can't be applied")
-
             newProduct = Mult(l1)
             ret = Eq(evidence.LHS,newProduct)
 
@@ -196,42 +278,6 @@ class Proof:
         self.justifications += ["identity elimination "] 
         self.show()
     
-    def splitPowerAddition(self,power):
-        """
-        Simplify power objects: Given an expression e^a+b, convert to e^a*e^b. Given an expression e^a*b=(e^a)^b
-        :param power: the power object with addition in exponent to be modified
-        """  
-        element = self.element
-        exp=self.exponent
-        l=exp.split("+")
-        if len(l)==1:
-            raise Exception ("No power addition to be split apart") 
-        multList=[]
-        for i in l: 
-            elem=power(element,i)
-            multList.append(elem)
-        self.steps += [Mult(multList)]
-        self.justifications += ["split up power with addition in exponents"] 
-        self.show()       
-             
-
-    def splitPowerMult(self,power):
-        """
-        Simplify power objects: Given an expression e^a*b=(e^a)^b
-        :param lineNum: the power object with mult in exponent to be modified
-        """  
-        element = self.element
-        exp=self.exponent
-        l=exp.split("*")
-        if len(l)==1:
-            raise Exception ("No power multiplication to be split apart") 
-        elem=element
-        for i in l: 
-            e=power(elem,i)
-            elem=e
-        self.steps += [elem]
-        self.justifications += ["split up power with multiplication in exponents"] 
-        self.show()
 
 class Mult:
     def __init__(self, elemList):
@@ -253,6 +299,10 @@ class Mult:
             return Mult(self.products+other.products) #Mult *
         else:
             return Mult(self.products+[other]) #Mult with element
+
+    def replace(self, var, expr):
+        return Mult([x if x != var else expr for x in self.products])
+
     
 class And:
     def __init__(self, arg1, arg2):
@@ -303,6 +353,20 @@ class Eq:
         self.LHS = LHS
         self.RHS = RHS
 
+    def __repr__(self):
+        return str(self.LHS) + ' = ' + str(self.RHS)
+
+    def __eq__(self,other):
+        if self.LHS == other.LHS and self.RHS == other.RHS:
+            return True 
+        elif self.LHS == other.RHS and self.RHS == other.LHS: # a=b is the same as b=a
+            return True 
+        else: 
+            return False
+
+    def replace(self, var, expr):
+        return Eq(self.LHS.replace(var,expr), self.RHS.replace(var,expr))
+
 def reduce(exp):
     if isinstance(exp, Not):
         if isinstance(exp.arg, Not):
@@ -320,4 +384,52 @@ def reduce(exp):
 #A for all is an equation including an arbitrary element, and a there exists is an equation including an existential element
 
 
+class forall:
+    def __init__(self, vars, g, eq): # should we check that vars is arbitrary elements?
+        self.arbelems = vars # list of arbitrary elements: [x,y]
+        self.group = g
+        self.eq = eq 
+
+    def __repr__(self):
+        return 'forall(' + str(self.arbelems) + ' in ' + str(self.group) + ', ' + str(self.expr)
+
+    def __eq__(self,other):
+        return self.arbelems == other.arbelems and self.group == other.group and self.eq == other.eq
+
+
+    def replace(self, replacements): # replacements = ['x','y'] - strings of the elements
+        if len(replacements) == len(self.arbelems):
+            if all(elem in self.group.elements for elem in replacements): # check if replacements are all normal elements of self.group
+                neweq = copy.deepcopy(self.eq)
+                for i in range(len(replacements)):
+                    neweq = neweq.replace(self.arbelems[i],replacements[i]) # repeatedly replace
+                return neweq
+            else:
+                raise Exception(f"Replacements contains elements that are not in {self.group}")
+        else:
+            raise Exception("Replacements is not the same length as the list of arbitrary elements")
+
+class thereexists:
+    def __init__(self, vars, g, eq): # should we check that vars is existential elements?
+        self.existelems = vars # list of existential elements: [a,b]
+        self.group = g
+        self.eq = eq
+
+    def __repr__(self):
+        return 'there exists(' + str(self.existelems) + ' in ' + str(self.group) + ', such that ' + str(self.eq) + ')'
+
+    def __eq__(self,other):
+        return self.existelems == other.existelems and self.group == other.group and self.expr == other.expr
+
+    def replace(self, replacements):
+        if len(replacements) == len(self.existelems):
+            if all(elem in self.group.elements for elem in replacements): # check if replacements are all normal elements of self.group
+                neweq = copy.deepcopy(self.eq)
+                for i in range(len(replacements)):
+                    neweq = neweq.replace(self.existelems[i],replacements[i]) # repeatedly replace
+                return neweq
+            else:
+                raise Exception(f"Replacements contains elements that are not in {self.group}")
+        else:
+            raise Exception("Replacements is not the same length as the list of existential elements")
 
