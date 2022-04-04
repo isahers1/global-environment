@@ -103,15 +103,98 @@ class Proof:
         e=multList[0]
         for i in multList: 
             if i != e: 
-                return None #TODO: change to throw exception here
+                raise Exception ("Need a single element but given multiple")
         result=power(e,len(multList)) 
         self.steps += [result]
         self.justifications += ['Convert multiplications to equivalent powers'] 
         self.show()
     
-    
+    def rightSidesEq(self, line1, line2):
+        """
+        If two sides have the same right side, then set left sides to equal in a new line
+        :param line1: the first line with same right side
+        :param line2: the second line with the same right side
+        """
+        l1 = self.steps[line1]
+        l2 = self.steps[line2]
+        if l1.RHS == l2.RHS:
+            self.steps += [Eq(l1.LHS,l2.LHS)]
+            self.justifications += [f"Equations with same right side on lines {str(line1)}, {str(line2)}"]
+            self.show()
 
+    def leftSidesEq(self, line1, line2):
+        """
+        If two sides have the same left side, then set left sides to equal in a new line
+        :param line1: the first line with same left side
+        :param line2: the second line with the same left side
+        """
+        l1 = self.steps[line1]
+        l2 = self.steps[line2]
+        if l1.LHS == l2.LHS:
+            self.steps += [Eq(l1.RHS,l2.RHS)]
+            self.justifications += [f"Equations with same left side on lines {str(line1)}, {str(line2)}"]
+            self.show()
 
+    def identleft(self, lineNum):
+        """
+        Identity elimination: find the first pair of element and the group identity return an element 
+        :param lineNum: the line of the proof to be modified 
+        """
+        evidence = self.steps[lineNum]
+        if isinstance(evidence,Eq): 
+            l = evidence.LHS.products
+            l1=[]
+            for i in range(len(l)-1):
+                # deals with the case a*1
+                # if isinstance(l[i],groupElement) and isinstance(l[i+1],ident):
+                if isinstance(l[i+1],identity):
+                    l1 = l[:i+1]+l[i+2:]
+                    break
+                # deals with the case 1*a
+                # elif isinstance(l[i],ident) and isinstance(l[i+1],groupElement):
+                elif isinstance(l[i],identity):
+                    l1 = l[i+1:]
+                    break
+                # else we can't apply identity elimination 
+            if l1==[]:
+                raise Exception ("identity can't be applied")
+            newProduct = Mult(l1)
+            ret = Eq(newProduct,evidence.RHS)
+
+        self.steps += [ret]
+        self.justifications += ["identity elimination "] 
+        self.show() 
+
+    def identright(self, lineNum):
+        """
+        Identity elimination: find the first pair of element and the group identity return an element 
+        :param lineNum: the line of the proof to be modified 
+        """
+        evidence = self.steps[lineNum]
+        if isinstance(evidence,Eq) and isinstance(evidence.arg2, Mult): 
+            l = evidence.RHS.products
+            l1=[]
+            for i in range(len(l)-1):
+                # deals with the case a*1
+                # if isinstance(l[i],groupElement) and isinstance(l[i+1],ident):
+                if isinstance(l[i+1],identity):
+                    l1 = l[:i+1]+l[i+2:]
+                    break
+                # deals with the case 1*a
+                # elif isinstance(l[i],ident) and isinstance(l[i+1],groupElement):
+                elif isinstance(l[i],identity):
+                    l1 = l[i+1:]
+                    break
+                # else we can't apply identity elimination 
+            if l1==[]:
+                raise Exception ("identity can't be applied")
+
+            newProduct = Mult(l1)
+            ret = Eq(evidence.LHS,newProduct)
+
+        self.steps += [ret]
+        self.justifications += ["identity elimination "] 
+        self.show()
 
 class Mult:
     def __init__(self, elemList):
