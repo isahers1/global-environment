@@ -55,7 +55,8 @@ class power:
                 return True 
             else: 
                 return False 
-        #Deal with e^2=e*e property 
+
+        #e^2=e*e property 
         # we can't have a mult object of length x, so this should only work for ints 
         #is encoding of mult still a list? 
         elif isinstance(self,power) and isinstance(other,power)==False:
@@ -67,8 +68,6 @@ class power:
             if isinstance(other.exponent,int):
                 if self.element == other.element and other.exponent == len(self.list):
                     return True 
-
-
         ## Deal with x^{a+2}=x^a*x^2? 
         
 

@@ -1,5 +1,5 @@
 from cv2 import AgastFeatureDetector_AGAST_7_12d
-
+import copy
 
 exec(compile(source=open('element.py').read(), filename='element.py', mode='exec'))
 exec(compile(source=open('environment.py').read(), filename='environment.py', mode='exec'))
@@ -37,6 +37,102 @@ class Proof:
         self.steps += [expr]
         self.justifications += ['introAssumption'] 
         self.show()
+
+    def MultElem(self, element1, element2):
+        l=[]
+        if isinstance(element1,Mult) and isinstance(element2, Mult):
+            l=element1.products+element2.products
+        elif isinstance(element1,Mult) and isinstance(element2, Mult) == False:
+            l= element1.products
+            l.append(element2)
+        elif isinstance(element1,Mult)==False and isinstance(element2, Mult):
+            l = element2.products
+            l.insert(0, element1)
+        else:
+            l.append(element1)
+            l.append(element2)
+        return Mult(l)
+    
+    def leftMult (self, elem, lineNum):
+        """
+        Left Multiply both sides of an equation with the input element 
+        :param lineNum: the equation in the proof that is to be modified 
+        :param elem: the element to left Multiply with 
+        """
+        elem2 = copy.deepcopy(self.steps[lineNum])
+        product = self.MultElem(elem, elem2.LHS)
+        result = Eq(product, self.MultElem(elem,elem2.RHS))
+        self.steps += [result]
+        self.justifications += ['Left Multiply by ' +str(elem) ] 
+        self.show()
+
+    def rightMult (self, elem, lineNum):
+        """
+        Right Multiply both sides of an equation with the input element 
+        :param lineNum: the line in the proof that is to be modified 
+        :param elem: the element to right Multiply 
+        """
+        elem1 = copy.deepcopy(self.steps[lineNum])
+        product = self.MultElem(elem1.LHS, elem)
+        result = Eq(product, self.MultElem(elem1.RHS,elem))
+        self.steps += [result]
+        self.justifications += ['Right Multiply by ' +str(elem)] 
+        self.show()
+
+    ##power methods 
+    def breakPower(self,power):
+        """
+        Given an expression like e^a where a is a python integer, return a mult object equivalent to e^a
+        :param power: the power to be converted to mult
+        """   
+        exp=self.exponent   
+        element = self.element 
+        multList=[]
+        for i in range(exp):
+            multList.append(element)
+        self.steps += [Mult(multList)]
+        self.justifications += ['Convert power object to mult object'] 
+        self.show()
+
+    def combinePower(self, mult):
+        """
+        Given a mult object with a single element, convert it to a power object (for example turning e*e*e to e^3)
+        :param mult: the mult object to be converted 
+        """  
+        multList=mult.elemList
+        e=multList[0]
+        for i in multList: 
+            if i != e: 
+                return None #TODO: change to throw exception here
+        result=power(e,len(multList)) 
+        self.steps += [result]
+        self.justifications += ['Convert multiplications to equivalent powers'] 
+        self.show()
+    
+    
+
+
+
+class Mult:
+    def __init__(self, elemList):
+        self.products = elemList
+    def __repr__(self):
+        string =""
+        for i in range(len(self.products)-1):
+            string += str(self.products[i])
+            string +=" * "
+        string += str(self.products[len(self.products)-1])
+        return string 
+    def __eq__(self,other):
+        if self.products == other.products:
+            return True 
+        else: 
+            return False
+    def __mul__(self,other):
+        if isinstance(other,Mult):
+            return Mult(self.products+other.products) #Mult *
+        else:
+            return Mult(self.products+[other]) #Mult with element
     
 class And:
     def __init__(self, arg1, arg2):
@@ -102,3 +198,6 @@ def reduce(exp):
 
 #My current vision is to have an arbitrary element class and an existential element class
 #A for all is an equation including an arbitrary element, and a there exists is an equation including an existential element
+
+
+
