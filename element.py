@@ -60,28 +60,22 @@ class arbitrary(element):
     def fullDescription(self):
         return  "Existential element " + self.elementName + " in group" + self.parentGroups[0].groupName # can only belong to one group
 
-# WE NEED TO AGREE ON EQUATION/STATEMENT/PROPERTY CLASSES BEFORE IMPLEMENTING THE BELOW CLASSES
+## Special types of elements/groups
 
-"""
-class generator(element):
+class identity(element):
     def __init__(self, elementName, pg):
         super().__init__(elementName, pg)
-        pg = self.parentGroups[0]
-        lh = equation([element('x',pg)],pg)
-        rh = equation([self,'**',1],pg) # need to change 1 to be there exists an integer k
-        stmnt = statement(lh,rh,pg) # also how can I add '**' as an operator?
-        gnrtr = forall([element('x',pg)],stmnt,pg)
-        pg.addElementProperty(gnrtr, elementName) # need to change
+        lhs = Mult([arbitrary('x',pg),elementName]) # self or elementName?
+        rhs = Mult([arbitrary('x',pg)])
+        eq = Eq(lhs,rhs,pg)
+        idnty = forall([arbitrary('x',pg)], pg, eq)
+        pg.addElementProperty(idnty,elementName)
 
 class inverse(element):
     def __init__(self, elementName, pg):
-        if elementName not in pg.elements:
-            raise Exception("You cannot create an inverse for an element that doesn't exist!")
-        else:
-            super().__init__(elementName + "^-1", g)
-            lh = equation([pg.elements[elementName],'*',self],pg)
-            rh = equation([pg.elements[pg.identity_identifier]],pg)
-            stmnt = statement(lh,rh,pg)
-            pg.addElementProperty(stmnt ,elementName) # need to change
-"""
-
+        super().__init__(elementName, pg)
+        lhs = Mult([arbitrary('x',pg),elementName]) # self or elementName?
+        rhs = Mult([arbitrary('x',pg)])
+        eq = Eq(lhs,rhs,pg)
+        idnty = forall([arbitrary('x',pg)], pg, eq)
+        pg.addElementProperty(idnty,elementName)
