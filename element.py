@@ -79,3 +79,5 @@ class inverse(element):
         eq = Eq(lhs,rhs,pg)
         idnty = forall([arbitrary('x',pg)], pg, eq)
         pg.addElementProperty(idnty,elementName)
+
+## need to add: generator
