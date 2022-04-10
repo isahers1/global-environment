@@ -74,7 +74,7 @@ class Proof:
                 self.justifications += [f'Modus Ponens on {str(lineNum2)}, {str(lineNum1)}'] 
                 self.show()
         else:
-            raise Exception (f"Neither of {str(lineNum1)}, {str(lineNum2)} are an implies statement")
+            print (f"Neither of {str(lineNum1)}, {str(lineNum2)} are an implies statement")
 
     def identElimRHS(self, lineNum):
         """"
@@ -92,7 +92,7 @@ class Proof:
                 pass
             return Mult(l)
         else:
-            raise Exception (f"The right hand side on line {lineNum} is not a Mult object")
+            print (f"The right hand side on line {lineNum} is not a Mult object")
 
     def identElimLHS(self, lineNum):
         """"
@@ -110,7 +110,7 @@ class Proof:
                 pass
             return Mult(l)
         else:
-            raise Exception (f"The left hand side on line {lineNum} is not a Mult object")
+            print (f"The left hand side on line {lineNum} is not a Mult object")
 
     def inverseElimRHS(self,lineNum):
         """
@@ -135,7 +135,7 @@ class Proof:
                     lawApplied=True
                     break
             if lawApplied==False:
-                raise Exception (f"Inverse laws can't be applied on line {lineNum}")
+                print (f"Inverse laws can't be applied on line {lineNum}")
         self.steps += [newProducts]
         self.justifications += [f'Right hand side inverse elimination on line {lineNum}'] 
         self.show()
@@ -163,7 +163,7 @@ class Proof:
                     lawApplied=True
                     break
             if lawApplied==False:
-                raise Exception (f"Inverse laws can't be applied on line {lineNum}")
+                print (f"Inverse laws can't be applied on line {lineNum}")
         self.steps += [newProducts]
         self.justifications += [f'Left hand side inverse elimination on line {lineNum}'] 
         self.show()
@@ -207,7 +207,7 @@ class Proof:
         """
         eq = copy.deepcopy(self.steps[lineNum])
         if isinstance(eq, Eq) == False:
-            raise Exception (f"Line {lineNum} is not an equation")
+            print (f"Line {lineNum} is not an equation")
         product = self.MultElem(elem, eq.LHS)
         result = Eq(product, self.MultElem(elem,eq.RHS), eq.parentgroup)
         self.steps += [result]
@@ -222,7 +222,7 @@ class Proof:
         """
         eq = copy.deepcopy(self.steps[lineNum])
         if isinstance(eq, Eq) == False:
-            raise Exception (f"Line {lineNum} is not an equation")
+            print (f"Line {lineNum} is not an equation")
         product = self.MultElem(eq.LHS, elem)
         result = Eq(product, self.MultElem(eq.RHS,elem), eq.parentgroup)
         self.steps += [result]
@@ -253,7 +253,7 @@ class Proof:
         e=multList[0]
         for i in multList: 
             if i != e: 
-                raise Exception ("Need a single element but given multiple")
+                print ("Need a single element but given multiple")
         result=power(e,len(multList)) 
         self.steps += [result]
         self.justifications += ['Convert multiplications to equivalent powers'] 
@@ -268,7 +268,7 @@ class Proof:
         exp=self.exponent
         l=exp.split("+")
         if len(l)==1:
-            raise Exception ("No power addition to be split apart") 
+            print ("No power addition to be split apart") 
         multList=[]
         for i in l: 
             elem=power(element,i)
@@ -287,7 +287,7 @@ class Proof:
         exp=self.exponent
         l=exp.split("*")
         if len(l)==1:
-            raise Exception ("No power multiplication to be split apart") 
+            print ("No power multiplication to be split apart") 
         elem=element
         for i in l: 
             e=power(elem,i)
@@ -310,7 +310,7 @@ class Proof:
             self.justifications += [f"Equations with same right side on lines {str(lineNum1)}, {str(lineNum2)}"]
             self.show()
         else:
-            raise Exception (f"The equations on lines {str(lineNum1)}, {str(lineNum2)} do not have the same right sides")
+            print (f"The equations on lines {str(lineNum1)}, {str(lineNum2)} do not have the same right sides")
 
     def leftSidesEq(self, lineNum1, lineNum2):
         """
@@ -325,7 +325,7 @@ class Proof:
             self.justifications += [f"Equations with same left side on lines {str(lineNum1)}, {str(lineNum2)}"]
             self.show()
         else:
-            raise Exception (f"The equations on lines {str(lineNum1)}, {str(lineNum2)} do not have the same left sides")
+            print (f"The equations on lines {str(lineNum1)}, {str(lineNum2)} do not have the same left sides")
 
     def identleft(self, lineNum):
         """
@@ -349,7 +349,7 @@ class Proof:
                     break
                 # else we can't apply identity elimination 
             if l1==[]:
-                raise Exception ("identity can't be applied")
+                print ("identity can't be applied")
             newProduct = Mult(l1)
             ret = Eq(newProduct,evidence.RHS,evidence.parentgroup)
 
@@ -379,7 +379,7 @@ class Proof:
                     break
                 # else we can't apply identity elimination 
             if l1==[]:
-                raise Exception ("identity can't be applied")
+                print ("identity can't be applied")
             newProduct = Mult(l1)
             ret = Eq(evidence.LHS,newProduct,evidence.parentgroup)
 
@@ -398,7 +398,7 @@ class Proof:
             self.justifications += ["reflexive equality"] 
             self.show()
         else:
-            raise Exception ("this is not reflexive")
+            print ("this is not reflexive")
 
     def reduceLogic(self, lineNum):
         """Recursively reduces a ND statement by pushing the nots in
@@ -409,7 +409,7 @@ class Proof:
             self.justifications += ["logic reduction"] 
             self.show()
         else:
-            raise Exception ("this is not a logic statement")
+            print ("this is not a logic statement")
 
     def introCases(self, case):
         """Introduction of cases (law of excluded middle)

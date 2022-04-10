@@ -118,7 +118,7 @@ class forall:
         self.eq = eq 
 
     def __repr__(self):
-        return 'forall(' + str(self.arbelems) + ' in ' + str(self.group) + ', ' + str(self.expr)
+        return 'forall(' + str(self.arbelems) + ' in ' + str(self.group) + ', ' + str(self.eq) +')'
 
     def __eq__(self,other):
         return self.arbelems == other.arbelems and self.group == other.group and self.eq == other.eq
