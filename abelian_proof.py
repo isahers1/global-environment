@@ -7,3 +7,6 @@ from logicObjects import *
 
 abelianG = forall(['x', 'y'], 'G', Eq(Mult(['x', 'y']), Mult(['y','x']),"G"))
 p = Proof('Simple Abelian Proof', forall(['x'], 'G', Eq(Mult(['x', 'x']), identity('1','G'),"G")), goal=abelianG)
+p.introGroup('G')
+p.introGroupElement('a', 'G')
+p.introGroupElement('b', 'G')
