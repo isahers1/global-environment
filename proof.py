@@ -8,12 +8,13 @@ from logicObjects import *
 class Proof:
     def __init__(self, label, assumption, goal=None, steps=[], justifications = []): # make goal optional
         self.label = label
-        self. assumption = assumption
+        self.assumption = assumption
         self.goal = goal # this is an implies
+        self.steps = []
         self.justifications = []
         self.environment = {} # add strings names to environment for parsing 
         self.depth = 0
-        self.currAssumption = [goal.assum]
+        # self.currAssumption = [goal.assum] # is this neccessary?
         self.show() 
     
     def qed(self):
@@ -35,6 +36,13 @@ class Proof:
     def introAssumption(self, expr):
         self.steps += [expr]
         self.justifications += ['introAssumption'] 
+        self.show()
+    
+    def introGroup(self, grp):
+        self.steps += [grp]
+        self.justifications += ["introGroup"]
+        #deal with environments
+        self.environment[grp.groupName] = grp
         self.show()
 
     def MultElem(self, element1, element2):

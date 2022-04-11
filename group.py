@@ -1,10 +1,13 @@
 exec(compile(source=open('element.py').read(), filename='element.py', mode='exec'))
+from logicObjects import identity
+
 
 class group:
     # TRUTHS for all classes - need to add more here
     identity_identifier = 'e'
     elements = {}
     groupProperties = {} 
+    elementProperties = {}
     binaryOperator = ""
     groupName = ""
 
@@ -50,3 +53,9 @@ class group:
 
     def addGroupProperty(self, property, propertyName):
         self.groupProperties[propertyName] = property
+    
+    def addElementProperty(self, property, elementName):
+        if elementName in self.elements or elementName == self.identity_identifier:
+            self.elementProperties[elementName] = property
+        else:
+            print("That element doesn't exist!")

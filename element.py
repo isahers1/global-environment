@@ -60,24 +60,5 @@ class arbitrary(element):
     def fullDescription(self):
         return  "Existential element " + self.elementName + " in group" + self.parentGroups[0].groupName # can only belong to one group
 
-## Special types of elements/groups
-
-class identity(element):
-    def __init__(self, elementName, pg):
-        super().__init__(elementName, pg)
-        lhs = Mult([arbitrary('x',pg),elementName]) # self or elementName?
-        rhs = Mult([arbitrary('x',pg)])
-        eq = Eq(lhs,rhs,pg)
-        idnty = forall([arbitrary('x',pg)], pg, eq)
-        pg.addElementProperty(idnty,elementName)
-
-class inverse(element):
-    def __init__(self, elementName, pg):
-        super().__init__(elementName, pg)
-        lhs = Mult([arbitrary('x',pg),elementName]) # self or elementName?
-        rhs = Mult([arbitrary('x',pg)])
-        eq = Eq(lhs,rhs,pg)
-        idnty = forall([arbitrary('x',pg)], pg, eq)
-        pg.addElementProperty(idnty,elementName)
 
 ## need to add: generator

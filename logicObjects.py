@@ -1,7 +1,7 @@
 import copy
 from dataclasses import replace
 
-from element import arbitrary
+from element import *
 
 class Mult:
     def __init__(self, elemList):
@@ -159,3 +159,23 @@ class thereexists:
                 print(f"Replacements contains elements that are not in {self.group}")
         else:
             print("Replacements is not the same length as the list of existential elements")
+
+## Special types of elements/groups
+
+class identity(element):
+    def __init__(self, elementName, pg):
+        super().__init__(elementName, pg)
+        lhs = Mult([arbitrary('x',pg),elementName]) # self or elementName?
+        rhs = Mult([arbitrary('x',pg)])
+        eq = Eq(lhs,rhs,pg)
+        idnty = forall([arbitrary('x',pg)], pg, eq)
+        pg.addElementProperty(idnty,elementName)
+
+class inverse(element):
+    def __init__(self, elementName, pg):
+        super().__init__(elementName, pg)
+        lhs = Mult([arbitrary('x',pg),elementName]) # self or elementName?
+        rhs = Mult([arbitrary('x',pg)])
+        eq = Eq(lhs,rhs,pg)
+        idnty = forall([arbitrary('x',pg)], pg, eq)
+        pg.addElementProperty(idnty,elementName)
