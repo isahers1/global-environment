@@ -132,9 +132,9 @@ class forall:
                     neweq = neweq.replace(self.arbelems[i],replacements[i]) # repeatedly replace
                 return neweq
             else:
-                raise Exception(f"Replacements contains elements that are not in {self.group}")
+                print(f"Replacements contains elements that are not in {self.group}")
         else:
-            raise Exception("Replacements is not the same length as the list of arbitrary elements")
+            print("Replacements is not the same length as the list of arbitrary elements")
 
 class thereexists:
     def __init__(self, vars, g, eq): # should we check that vars is existential elements?
@@ -156,6 +156,6 @@ class thereexists:
                     neweq = neweq.replace(self.existelems[i],replacements[i]) # repeatedly replace
                 return neweq
             else:
-                raise Exception(f"Replacements contains elements that are not in {self.group}")
+                print(f"Replacements contains elements that are not in {self.group}")
         else:
-            raise Exception("Replacements is not the same length as the list of existential elements")
+            print("Replacements is not the same length as the list of existential elements")
