@@ -1,5 +1,5 @@
+from re import L
 from element import *
-from environment import *
 from group import *
 from integer import *
 from logicObjects import *
@@ -12,21 +12,17 @@ class Proof:
         self.goal = goal # this is an implies
         self.steps = []
         self.justifications = []
-        self.environment = {} # add strings names to environment for parsing 
+        self.env = {}
         self.depth = 0
-        # self.currAssumption = [goal.assum] # is this neccessary?
-        self.show() 
     
-    def qed(self, replacements, lineNum):
-        if isinstance(self.goal, forall): # how do I know a line is a replacement of a forall?
-            if self.goal.replace(replacements) == self.steps[lineNum]: # how do I know replacement variables are all arbitrarily introduced?
-                self.steps += [True]
-                self.justifications += [f"Proof is finished by line {lineNum}"]
-                self.show()
-            else:
-                print("Hmm, that line doesn't seem to prove what you think it does. Is there another line you meant? You may have also replaced incorrectly.")
-        else:    
-            return self.goal.conc in self.steps
+    def qed(self, lineNum):
+        print(self.goal, self.steps[lineNum])
+        if self.goal == self.steps[lineNum]:
+            self.steps+=["□"]
+            self.justifications += ["QED"]
+            self.show()
+        else:
+            print("This is not the same as the goal")
 
     def undo(self):
         self.steps = self.steps[:-1]
@@ -50,7 +46,7 @@ class Proof:
         self.steps += [grp]
         self.justifications += ["introGroup"]
         #deal with environments
-        self.environment[grp.groupName] = grp
+        self.env[grp.groupName] = grp
         self.show()
     
     def accessAssumption(self):
@@ -461,3 +457,31 @@ class Proof:
         """
         conc = Implies(self.assumption, self.steps[lineNum])
         return conc
+
+    def introElement(self,G, name):
+        self.env[name] = G.newElement(name)
+        self.steps += [In(name, G)]
+        self.justifications += ["Introducing an arbitrary element"]
+        self.show()
+    
+    def forAllIntroduction(self, equationLine, vars, elemIntroLines):
+        evidence = copy.deepcopy(self.steps[equationLine])
+        G = self.steps[elemIntroLines[0]].grp
+        #Checking that the lines introduce the arbitrary variables, and that the variables are all in the same group
+        for i in range(len(vars)):
+            v = vars[i]
+            l = elemIntroLines[i]
+            if self.steps[l].elem!=vars[i]:
+                print("Line", l, "does not introduce variable", v)
+            if self.steps[l].grp!=G:
+                print("Element", v, "is not in group", G)
+        #If you make it here, this is a valid for all intro
+        self.steps+=[forall(vars,G,self.steps[equationLine])]
+        self.justifications+=["For all introduction"]
+        self.show()
+
+    def closure(self,G,a,b):
+        G.mulElements(a,b)
+        self.steps+=[In(G,Mult([a,b]))]
+        self.justifications+=["Closure"]
+        self.show()
