@@ -22,7 +22,10 @@ class element:
         return self.elementName
 
     def __eq__(self,other):
-        return self.elementName == other.elementName
+        try:
+            return self.elementName == other.elementName
+        except:
+            return False
 
     def mult(self,other, group): # this is just for representation
         binOp = group.binaryOperator

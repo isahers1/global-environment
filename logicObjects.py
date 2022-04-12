@@ -25,7 +25,17 @@ class Mult:
             return Mult(self.products+[other]) #Mult with element
 
     def replace(self, var, expr):
-        return Mult([x if x != var else expr for x in self.products])
+        new_products = []
+        i = 0
+        #print(self.products,var.products,expr.products)
+        while i < len(self.products):
+                if self.products[i:i+len(var.products)] == var.products:
+                    new_products += expr.products
+                    i+=len(var.products)
+                else:
+                    new_products.append(self.products[i])
+                    i+=1
+        return Mult(new_products)
 
     
 class And:
@@ -129,7 +139,7 @@ class forall:
             if all(elem in self.group.elements for elem in replacements): # check if replacements are all normal elements of self.group
                 neweq = copy.deepcopy(self.eq)
                 for i in range(len(replacements)):
-                    neweq = neweq.replace(self.arbelems[i],replacements[i]) # repeatedly replace
+                    neweq = neweq.replace(Mult([self.arbelems[i]]),self.group.elements[replacements[i]]) # repeatedly replace
                 return neweq
             else:
                 print(f"Replacements contains elements that are not in {self.group}")
@@ -163,7 +173,8 @@ class thereexists:
 ## Special types of elements/groups
 
 class identity(element):
-    def __init__(self, elementName, pg):
+    def __init__(self, pg):
+        elementName = pg.identity_identifier
         super().__init__(elementName, pg)
         lhs = Mult([arbitrary('x',pg),elementName]) # self or elementName?
         rhs = Mult([arbitrary('x',pg)])

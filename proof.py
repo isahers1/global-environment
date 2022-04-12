@@ -44,6 +44,11 @@ class Proof:
         #deal with environments
         self.environment[grp.groupName] = grp
         self.show()
+    
+    def accessAssumption(self):
+        self.steps += [self.assumption]
+        self.justifications += ["Accessed Assumption"]
+        self.show()
 
     def MultElem(self, element1, element2):
         l=[]
@@ -59,11 +64,50 @@ class Proof:
             l.append(element1)
             l.append(element2)
         return Mult(l)
+
+
+    def substituteRHS(self, lineNum1, lineNum2):
+        """
+        Given a representation of a mult object, replace all instances of it in one equation
+        :param lineNum1: Line to substitute into
+        :param lineNum2: Line with substitutsion of x = y, will replace all instances of x with y in lineNum1
+        """
+        ev1 = self.steps[lineNum1]
+        ev2 = self.steps[lineNum2]
+        if isinstance(ev1, Eq):
+            if isinstance(ev2, Eq):
+                replacement = ev1.replace(ev2.LHS,ev2.RHS)
+                self.steps += [replacement]
+                self.justifications += [f'Replaced all instances of {ev2.LHS} with {ev2.RHS} on line {lineNum1}']
+                self.show()
+            else:
+                print("Cannot substitute without an Equation")
+        else:
+            print("Cannot substitute without an Equation")
+
+    def substituteLHS(self, lineNum1, lineNum2):
+        """
+        Given a representation of a mult object, replace all instances of it in one equation
+        :param lineNum1: Line to substitute into
+        :param lineNum2: Line with substitutsion of y = x, will replace all instances of y with x in lineNum1
+        """
+        ev1 = self.steps[lineNum1]
+        ev2 = self.steps[lineNum2]
+        if isinstance(ev1, Eq):
+            if isinstance(ev2, Eq):
+                replacement = ev1.replace(ev2.RHS,ev2.LHS)
+                self.steps += [replacement]
+                self.justifications += [f'Replaced all instances of {ev2.RHS} with {ev2.LHS} on line {lineNum1}']
+                self.show()
+            else:
+                print("Cannot substitute without an Equation")
+        else:
+            print("Cannot substitute without an Equation")
     
     def modus(self, lineNum1, lineNum2):
         """
         modus pones: given A->B and A, the function concludes B and add it as a new line in the proof
-        lineNum1 and lineNum2: one line in the proof where the person showed A->B and one line the proof where the person showed A
+        :param lineNum1 and lineNum2: one line in the proof where the person showed A->B and one line the proof where the person showed A
         """
         ev1 = self.steps[lineNum1]
         ev2 = self.steps[lineNum2]
@@ -83,42 +127,6 @@ class Proof:
                 self.show()
         else:
             print (f"Neither of {str(lineNum1)}, {str(lineNum2)} are an implies statement")
-
-    def identElimRHS(self, lineNum):
-        """"
-        Remove all instances of the identity from an equation
-        :param lineNum: the line of the proof to be modified on the right hand side
-        """
-        evidence = copy.deepcopy(self.steps[lineNum])
-        rhsevidence = evidence.RHS
-        if isinstance(rhsevidence,Mult):
-            l = copy.deepcopy(rhsevidence.prodcuts)
-            try:
-                while True:
-                    l.remove(evidence.parentgroup.identity_identifier)
-            except ValueError:
-                pass
-            return Mult(l)
-        else:
-            print (f"The right hand side on line {lineNum} is not a Mult object")
-
-    def identElimLHS(self, lineNum):
-        """"
-        Remove all instances of the identity from an equation
-        :param lineNum: the line of the proof to be modified on the left hand side
-        """
-        evidence = copy.deepcopy(self.steps[lineNum])
-        lhsevidence = evidence.LHS
-        if isinstance(lhsevidence,Mult):
-            l = copy.deepcopy(lhsevidence.prodcuts)
-            try:
-                while True:
-                    l.remove(evidence.parentgroup.identity_identifier)
-            except ValueError:
-                pass
-            return Mult(l)
-        else:
-            print (f"The left hand side on line {lineNum} is not a Mult object")
 
     def inverseElimRHS(self,lineNum):
         """
@@ -186,11 +194,12 @@ class Proof:
         """
         evidence = copy.deepcopy(self.steps[lineNum])
         if isinstance(evidence, forall) == False:
-            raise Exception(f"There is no forall statmenent on line {lineNum}")
-        evidence.replace(replacements)
-        self.steps += [evidence.expr]
-        self.justifications += [f'For all elimination on line {lineNum}'] 
-        self.show() 
+            print(f"There is no forall statmenent on line {lineNum}")
+        else:
+            expr = evidence.replace(replacements)
+            self.steps += [expr]
+            self.justifications += [f'For all elimination on line {lineNum}'] 
+            self.show() 
     
     def thereexistsElim(self, lineNum, replacements): # We can only do this once!
         """
@@ -200,11 +209,12 @@ class Proof:
         """
         evidence = copy.deepcopy(self.steps[lineNum])
         if isinstance(evidence, thereexists) == False:
-            raise Exception(f"There is no there exists statmenent on line {lineNum}")
-        evidence.replace(replacements)
-        self.steps += [evidence.expr]
-        self.justifications += [f'There exists elimination on line {lineNum}'] 
-        self.show() 
+            print(f"There is no there exists statmenent on line {lineNum}")
+        else:
+            expr = evidence.replace(replacements)
+            self.steps += [expr]
+            self.justifications += [f'There exists elimination on line {lineNum}'] 
+            self.show() 
 
     ## Multiplication manipulation
     def leftMult (self, elem, lineNum):
@@ -371,7 +381,7 @@ class Proof:
         :param lineNum: the line of the proof to be modified 
         """
         evidence = self.steps[lineNum]
-        if isinstance(evidence,Eq) and isinstance(evidence.arg2, Mult): 
+        if isinstance(evidence,Eq): 
             l = evidence.RHS.products
             l1=[]
             for i in range(len(l)-1):

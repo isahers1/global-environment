@@ -1,5 +1,5 @@
 exec(compile(source=open('element.py').read(), filename='element.py', mode='exec'))
-from logicObjects import identity
+from logicObjects import identity, Mult
 
 
 class group:
@@ -14,7 +14,7 @@ class group:
     def __init__(self, name, binOp, additionalGroupProperties = None):
         self.groupName = name
         self.binaryOperator = binOp
-        self.elements.update({self.identity_identifier:identity(self.identity_identifier,self)})
+        self.elements.update({self.identity_identifier:Mult([identity(self)])})
         if additionalGroupProperties != None:
             self.groupProperties.update(additionalGroupProperties)
 
@@ -34,7 +34,7 @@ class group:
     # declare new element in group with elementName
     def newElement(self,elementName):
         if elementName not in self.elements:
-            self.elements.update({elementName:element(elementName,self)})
+            self.elements.update({elementName:Mult([element(elementName,self)])})
         else:
             print("Sorry, that element already exists!")
 
@@ -46,8 +46,8 @@ class group:
             try:
                 gelem1 = self.elements[elem1]
                 gelem2 = self.elements[elem2]
-                result = gelem1.mult(gelem2, self) # need to specify which group we are multiplying in
-                self.elements.update({result:element(result,self)}) # is this the right?
+                result = gelem1 * gelem2 # need to specify which group we are multiplying in
+                self.elements.update({repr(result):result}) # is this the right?
             except:
                 print("Sorry, one or both of these elements are not in the group!")
 
@@ -58,4 +58,4 @@ class group:
         if elementName in self.elements or elementName == self.identity_identifier:
             self.elementProperties[elementName] = property
         else:
-            print("That element doesn't exist!")
+            print("That element doesn't exist!", property, elementName)
