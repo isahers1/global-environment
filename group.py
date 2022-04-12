@@ -59,3 +59,6 @@ class group:
             self.elementProperties[elementName] = property
         else:
             print("That element doesn't exist!", property, elementName)
+
+    def contains(self, elementName):
+        return elementName in self.elements

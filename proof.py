@@ -414,6 +414,7 @@ class Proof:
         Introduce a reflexive equality (like x=x)
         Necessary to show something equals something else when not given
         a starting equation
+        :param eq: The equality you want to introduce
         """
         if eq.LHS == eq.RHS:
             self.steps+=[eq]
@@ -423,7 +424,9 @@ class Proof:
             print ("this is not reflexive")
 
     def reduceLogic(self, lineNum):
-        """Recursively reduces a ND statement by pushing the nots in
+        """
+        Recursively reduces a ND statement by pushing in the nots
+        :param lineNum: the line of the proof to be modified 
         """
         evidence = self.steps[lineNum]
         if type(lineNum) in [And, Or, Implies, Not]:
@@ -434,7 +437,9 @@ class Proof:
             print ("this is not a logic statement")
 
     def introCases(self, case):
-        """Introduction of cases (law of excluded middle)
+        """
+        Introduction of cases (law of excluded middle)
+        :param case: the equation/logical statement of one case (the other is a not of that) 
         """
         case1 = case
         case2 = reduce(Not(case))
@@ -443,8 +448,11 @@ class Proof:
         self.show()
 
     def introSubproof(self, assum):
-        """This one returns so the user has access to the new subproof
+        """
+        WIP
+        This one returns so the user has access to the new subproof
         We will have to make show recursive to make the subproof steps show
+        :param assum: the assumption for the subproof
         """
         subproof = Proof(label="Subproof", steps=[self.steps], justifications = [self.justifications])
         self.steps += [subproof]
@@ -452,19 +460,37 @@ class Proof:
         return subproof
 
     def concludeSubproof(self, lineNum):
-        """You conclude a subproof from the parent subproof
+        """
+        WIP
+        You conclude a subproof from the parent subproof
         Work in progress, we should discuss how to do this.
+        :param lineNum: the conclusion of the subproof to turn into an implies
         """
         conc = Implies(self.assumption, self.steps[lineNum])
         return conc
 
     def introElement(self,G, name):
-        self.env[name] = G.newElement(name)
-        self.steps += [In(name, G)]
-        self.justifications += ["Introducing an arbitrary element"]
-        self.show()
+        """
+        Introduces an arbitrary element in G
+        Can be used as evidence for a forall introduction
+        :param G: the group the elemen is in
+        :param name: the name of the new element
+        """
+        if G.contains(name):
+            print(f"{name} is already in {G}")
+        else:
+            self.env[name] = G.newElement(name)
+            self.steps += [In(name, G)]
+            self.justifications += ["Introducing an arbitrary element"]
+            self.show()
     
     def forAllIntroduction(self, equationLine, vars, elemIntroLines):
+        '''
+        Creates a for all from an equation with arbitrary variables
+        :param equationLine: the equation
+        :param vars: the names of the arbitrary variables
+        :param elemIntroLines: the lines of the introductions of the variables (to show they are arbitrary)
+        '''
         evidence = copy.deepcopy(self.steps[equationLine])
         G = self.steps[elemIntroLines[0]].grp
         #Checking that the lines introduce the arbitrary variables, and that the variables are all in the same group
@@ -481,7 +507,19 @@ class Proof:
         self.show()
 
     def closure(self,G,a,b):
-        G.mulElements(a,b)
-        self.steps+=[In(G,Mult([a,b]))]
-        self.justifications+=["Closure"]
-        self.show()
+        '''
+        Introduces ab as an element of G by closure
+        :param G: the group a,b are in
+        :param a: element a
+        :param b: element b
+        '''
+        if G.contains(a) and G.contains(b):
+            G.mulElements(a,b)
+            self.steps+=[In(G,Mult([a,b]))]
+            self.justifications+=["Closure"]
+            self.show()
+        else:
+            if not G.contains(a):
+                print(f"{a} is not in {G}")
+            else:
+                print(f"{b} is not in {G}")
