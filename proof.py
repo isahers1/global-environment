@@ -17,8 +17,14 @@ class Proof:
         # self.currAssumption = [goal.assum] # is this neccessary?
         self.show() 
     
-    def qed(self):
-        return self.goal.conc in self.steps
+    def qed(self, replacements, lineNum):
+        if isinstance(self.goal, forall): # how do I know a line is a replacement of a forall?
+            if self.goal.replace(replacements) == self.steps[lineNum]: # how do I know replacement variables are all arbitrarily introduced?
+                self.steps += [True]
+                self.justifications += [f"Proof is finished by line {lineNum}"]
+                self.show()
+        else:    
+            return self.goal.conc in self.steps
 
     def undo(self):
         self.steps = self.steps[:-1]

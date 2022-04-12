@@ -23,5 +23,4 @@ p.rightMult(G.elements['b'],7)
 p.forallElim(1,['b'])
 p.substituteRHS(8,9)
 p.identleft(10)
-
-## HOW DO WE FINISH THE PROOF?
+p.qed(['b','a'],11)
