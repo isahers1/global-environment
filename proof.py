@@ -23,6 +23,8 @@ class Proof:
                 self.steps += [True]
                 self.justifications += [f"Proof is finished by line {lineNum}"]
                 self.show()
+            else:
+                print("Hmm, that line doesn't seem to prove what you think it does. Is there another line you meant? You may have also replaced incorrectly.")
         else:    
             return self.goal.conc in self.steps
 
