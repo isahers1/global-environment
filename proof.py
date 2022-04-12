@@ -16,7 +16,6 @@ class Proof:
         self.depth = 0
     
     def qed(self, lineNum):
-        print(self.goal, self.steps[lineNum])
         if self.goal == self.steps[lineNum]:
             self.steps+=["□"]
             self.justifications += ["QED"]
@@ -156,6 +155,7 @@ class Proof:
                     break
             if lawApplied==False:
                 print (f"Inverse laws can't be applied on line {lineNum}")
+                return
         self.steps += [newProducts]
         self.justifications += [f'Right hand side inverse elimination on line {lineNum}'] 
         self.show()
@@ -184,6 +184,7 @@ class Proof:
                     break
             if lawApplied==False:
                 print (f"Inverse laws can't be applied on line {lineNum}")
+                return
         self.steps += [newProducts]
         self.justifications += [f'Left hand side inverse elimination on line {lineNum}'] 
         self.show()
@@ -230,6 +231,7 @@ class Proof:
         eq = copy.deepcopy(self.steps[lineNum])
         if isinstance(eq, Eq) == False:
             print (f"Line {lineNum} is not an equation")
+            return
         product = self.MultElem(elem, eq.LHS)
         result = Eq(product, self.MultElem(elem,eq.RHS), eq.parentgroup)
         self.steps += [result]
@@ -245,6 +247,7 @@ class Proof:
         eq = copy.deepcopy(self.steps[lineNum])
         if isinstance(eq, Eq) == False:
             print (f"Line {lineNum} is not an equation")
+            return
         product = self.MultElem(eq.LHS, elem)
         result = Eq(product, self.MultElem(eq.RHS,elem), eq.parentgroup)
         self.steps += [result]
@@ -276,6 +279,7 @@ class Proof:
         for i in multList: 
             if i != e: 
                 print ("Need a single element but given multiple")
+                return
         result=power(e,len(multList)) 
         self.steps += [result]
         self.justifications += ['Convert multiplications to equivalent powers'] 
@@ -290,7 +294,8 @@ class Proof:
         exp=self.exponent
         l=exp.split("+")
         if len(l)==1:
-            print ("No power addition to be split apart") 
+            print ("No power addition to be split apart")
+            return
         multList=[]
         for i in l: 
             elem=power(element,i)
@@ -309,7 +314,8 @@ class Proof:
         exp=self.exponent
         l=exp.split("*")
         if len(l)==1:
-            print ("No power multiplication to be split apart") 
+            print ("No power multiplication to be split apart")
+            return
         elem=element
         for i in l: 
             e=power(elem,i)
@@ -333,6 +339,7 @@ class Proof:
             self.show()
         else:
             print (f"The equations on lines {str(lineNum1)}, {str(lineNum2)} do not have the same right sides")
+            return
 
     def leftSidesEq(self, lineNum1, lineNum2):
         """
@@ -348,6 +355,7 @@ class Proof:
             self.show()
         else:
             print (f"The equations on lines {str(lineNum1)}, {str(lineNum2)} do not have the same left sides")
+            return
 
     def identleft(self, lineNum):
         """
@@ -372,6 +380,7 @@ class Proof:
                 # else we can't apply identity elimination 
             if l1==[]:
                 print ("identity can't be applied")
+                return
             newProduct = Mult(l1)
             ret = Eq(newProduct,evidence.RHS,evidence.parentgroup)
 
@@ -402,6 +411,7 @@ class Proof:
                 # else we can't apply identity elimination 
             if l1==[]:
                 print ("identity can't be applied")
+                return
             newProduct = Mult(l1)
             ret = Eq(evidence.LHS,newProduct,evidence.parentgroup)
 
@@ -499,8 +509,10 @@ class Proof:
             l = elemIntroLines[i]
             if self.steps[l].elem!=vars[i]:
                 print("Line", l, "does not introduce variable", v)
+                return
             if self.steps[l].grp!=G:
                 print("Element", v, "is not in group", G)
+                return
         #If you make it here, this is a valid for all intro
         self.steps+=[forall(vars,G,self.steps[equationLine])]
         self.justifications+=["For all introduction"]
