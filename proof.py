@@ -36,6 +36,17 @@ class Proof:
         self.steps += [expr]
         self.justifications += ['introAssumption'] 
         self.show()
+    
+    def introGroup(self, groupName):
+        self.steps += [group(groupName)]
+        self.justifications += ["introGroup"]
+        self.show()
+
+    def introGroupElement(self, elementName, groupName):
+        self.steps += [groupElement(elementName, groupName)]
+        self.justifications += ['introGroupElement']
+        default = {"in":[groupName], "prop":[]}
+        self.show()
 
     def MultElem(self, element1, element2):
         l=[]
