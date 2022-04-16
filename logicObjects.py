@@ -1,7 +1,7 @@
 import copy
 from dataclasses import replace
 
-from element import arbitrary
+from element import *
 
 class Mult:
     def __init__(self, elemList):
@@ -25,7 +25,17 @@ class Mult:
             return Mult(self.products+[other]) #Mult with element
 
     def replace(self, var, expr):
-        return Mult([x if x != var else expr for x in self.products])
+        new_products = []
+        i = 0
+        #print(self.products,var.products,expr.products)
+        while i < len(self.products):
+                if self.products[i:i+len(var.products)] == var.products:
+                    new_products += expr.products
+                    i+=len(var.products)
+                else:
+                    new_products.append(self.products[i])
+                    i+=1
+        return Mult(new_products)
 
     
 class And:
@@ -71,6 +81,14 @@ class Not:
 class Bottom:
     def elim(self, conclusion):
         return conclusion
+
+class In:
+    def __init__(self, elem, grp):
+        self.elem = elem
+        self.grp = grp
+
+    def __repr__(self):
+        return str(self.elem) + " ∈ " + str(self.grp)
 
 class Eq:
     def __init__(self,LHS,RHS,pg):
@@ -121,20 +139,30 @@ class forall:
         return 'forall(' + str(self.arbelems) + ' in ' + str(self.group) + ', ' + str(self.eq) +')'
 
     def __eq__(self,other):
-        return self.arbelems == other.arbelems and self.group == other.group and self.eq == other.eq
+        if not isinstance(other,forall):
+            return False
+        if len(self.arbelems)==len(other.arbelems):
+            print(self,other)
+            new = copy.deepcopy(self)
+            replaced = new.replace(other.arbelems)
+            return replaced == other.eq
+        else:
+            return False
 
 
     def replace(self, replacements): # replacements = ['x','y'] - strings of the elements
         if len(replacements) == len(self.arbelems):
-            if all(elem in self.group.elements for elem in replacements): # check if replacements are all normal elements of self.group
-                neweq = copy.deepcopy(self.eq)
-                for i in range(len(replacements)):
-                    neweq = neweq.replace(self.arbelems[i],replacements[i]) # repeatedly replace
-                return neweq
-            else:
-                raise Exception(f"Replacements contains elements that are not in {self.group}")
+            #if all(elem in self.group.elements for elem in replacements): # check if replacements are all normal elements of self.group
+            #The scope of thee elements in a for all should be contained in that for all
+            #Checking if in the group should happen at elimination and introduction
+            neweq = copy.deepcopy(self.eq)
+            for i in range(len(replacements)):
+                 neweq = neweq.replace(Mult([self.arbelems[i]]),self.group.elements[replacements[i]]) # repeatedly replace
+            return neweq
+            #else:
+                #print(f"Replacements contains elements that are not in {self.group}")
         else:
-            raise Exception("Replacements is not the same length as the list of arbitrary elements")
+            print("Replacements is not the same length as the list of arbitrary elements")
 
 class thereexists:
     def __init__(self, vars, g, eq): # should we check that vars is existential elements?
@@ -156,6 +184,27 @@ class thereexists:
                     neweq = neweq.replace(self.existelems[i],replacements[i]) # repeatedly replace
                 return neweq
             else:
-                raise Exception(f"Replacements contains elements that are not in {self.group}")
+                print(f"Replacements contains elements that are not in {self.group}")
         else:
-            raise Exception("Replacements is not the same length as the list of existential elements")
+            print("Replacements is not the same length as the list of existential elements")
+
+## Special types of elements/groups
+
+class identity(element):
+    def __init__(self, pg):
+        elementName = pg.identity_identifier
+        super().__init__(elementName, pg)
+        lhs = Mult([arbitrary('x',pg),elementName]) # self or elementName?
+        rhs = Mult([arbitrary('x',pg)])
+        eq = Eq(lhs,rhs,pg)
+        idnty = forall([arbitrary('x',pg)], pg, eq)
+        pg.addElementProperty(idnty,elementName)
+
+class inverse(element):
+    def __init__(self, elementName, pg):
+        super().__init__(elementName, pg)
+        lhs = Mult([arbitrary('x',pg),elementName]) # self or elementName?
+        rhs = Mult([arbitrary('x',pg)])
+        eq = Eq(lhs,rhs,pg)
+        idnty = forall([arbitrary('x',pg)], pg, eq)
+        pg.addElementProperty(idnty,elementName)

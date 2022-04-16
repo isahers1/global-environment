@@ -1,5 +1,5 @@
+from re import L
 from element import *
-from environment import *
 from group import *
 from integer import *
 from logicObjects import *
@@ -8,16 +8,20 @@ from logicObjects import *
 class Proof:
     def __init__(self, label, assumption, goal=None, steps=[], justifications = []): # make goal optional
         self.label = label
-        self. assumption = assumption
+        self.assumption = assumption
         self.goal = goal # this is an implies
+        self.steps = []
         self.justifications = []
-        self.environment = {} # add strings names to environment for parsing 
+        self.env = {}
         self.depth = 0
-        self.currAssumption = [goal.assum]
-        self.show() 
     
-    def qed(self):
-        return self.goal.conc in self.steps
+    def qed(self, lineNum):
+        if self.goal == self.steps[lineNum]:
+            self.steps+=["□"]
+            self.justifications += ["QED"]
+            self.show()
+        else:
+            print("This is not the same as the goal")
 
     def undo(self):
         self.steps = self.steps[:-1]
@@ -46,6 +50,16 @@ class Proof:
         self.steps += [groupElement(elementName, groupName)]
         self.justifications += ['introGroupElement']
         default = {"in":[groupName], "prop":[]}
+    def introGroup(self, grp):
+        self.steps += [grp]
+        self.justifications += ["introGroup"]
+        #deal with environments
+        self.env[grp.groupName] = grp
+        self.show()
+    
+    def accessAssumption(self):
+        self.steps += [self.assumption]
+        self.justifications += ["Accessed Assumption"]
         self.show()
 
     def MultElem(self, element1, element2):
@@ -62,11 +76,50 @@ class Proof:
             l.append(element1)
             l.append(element2)
         return Mult(l)
+
+
+    def substituteRHS(self, lineNum1, lineNum2):
+        """
+        Given a representation of a mult object, replace all instances of it in one equation
+        :param lineNum1: Line to substitute into
+        :param lineNum2: Line with substitutsion of x = y, will replace all instances of x with y in lineNum1
+        """
+        ev1 = self.steps[lineNum1]
+        ev2 = self.steps[lineNum2]
+        if isinstance(ev1, Eq):
+            if isinstance(ev2, Eq):
+                replacement = ev1.replace(ev2.LHS,ev2.RHS)
+                self.steps += [replacement]
+                self.justifications += [f'Replaced all instances of {ev2.LHS} with {ev2.RHS} on line {lineNum1}']
+                self.show()
+            else:
+                print("Cannot substitute without an Equation")
+        else:
+            print("Cannot substitute without an Equation")
+
+    def substituteLHS(self, lineNum1, lineNum2):
+        """
+        Given a representation of a mult object, replace all instances of it in one equation
+        :param lineNum1: Line to substitute into
+        :param lineNum2: Line with substitutsion of y = x, will replace all instances of y with x in lineNum1
+        """
+        ev1 = self.steps[lineNum1]
+        ev2 = self.steps[lineNum2]
+        if isinstance(ev1, Eq):
+            if isinstance(ev2, Eq):
+                replacement = ev1.replace(ev2.RHS,ev2.LHS)
+                self.steps += [replacement]
+                self.justifications += [f'Replaced all instances of {ev2.RHS} with {ev2.LHS} on line {lineNum1}']
+                self.show()
+            else:
+                print("Cannot substitute without an Equation")
+        else:
+            print("Cannot substitute without an Equation")
     
     def modus(self, lineNum1, lineNum2):
         """
         modus pones: given A->B and A, the function concludes B and add it as a new line in the proof
-        lineNum1 and lineNum2: one line in the proof where the person showed A->B and one line the proof where the person showed A
+        :param lineNum1 and lineNum2: one line in the proof where the person showed A->B and one line the proof where the person showed A
         """
         ev1 = self.steps[lineNum1]
         ev2 = self.steps[lineNum2]
@@ -86,42 +139,6 @@ class Proof:
                 self.show()
         else:
             print (f"Neither of {str(lineNum1)}, {str(lineNum2)} are an implies statement")
-
-    def identElimRHS(self, lineNum):
-        """"
-        Remove all instances of the identity from an equation
-        :param lineNum: the line of the proof to be modified on the right hand side
-        """
-        evidence = copy.deepcopy(self.steps[lineNum])
-        rhsevidence = evidence.RHS
-        if isinstance(rhsevidence,Mult):
-            l = copy.deepcopy(rhsevidence.prodcuts)
-            try:
-                while True:
-                    l.remove(evidence.parentgroup.identity_identifier)
-            except ValueError:
-                pass
-            return Mult(l)
-        else:
-            print (f"The right hand side on line {lineNum} is not a Mult object")
-
-    def identElimLHS(self, lineNum):
-        """"
-        Remove all instances of the identity from an equation
-        :param lineNum: the line of the proof to be modified on the left hand side
-        """
-        evidence = copy.deepcopy(self.steps[lineNum])
-        lhsevidence = evidence.LHS
-        if isinstance(lhsevidence,Mult):
-            l = copy.deepcopy(lhsevidence.prodcuts)
-            try:
-                while True:
-                    l.remove(evidence.parentgroup.identity_identifier)
-            except ValueError:
-                pass
-            return Mult(l)
-        else:
-            print (f"The left hand side on line {lineNum} is not a Mult object")
 
     def inverseElimRHS(self,lineNum):
         """
@@ -147,6 +164,7 @@ class Proof:
                     break
             if lawApplied==False:
                 print (f"Inverse laws can't be applied on line {lineNum}")
+                return
         self.steps += [newProducts]
         self.justifications += [f'Right hand side inverse elimination on line {lineNum}'] 
         self.show()
@@ -175,6 +193,7 @@ class Proof:
                     break
             if lawApplied==False:
                 print (f"Inverse laws can't be applied on line {lineNum}")
+                return
         self.steps += [newProducts]
         self.justifications += [f'Left hand side inverse elimination on line {lineNum}'] 
         self.show()
@@ -189,11 +208,12 @@ class Proof:
         """
         evidence = copy.deepcopy(self.steps[lineNum])
         if isinstance(evidence, forall) == False:
-            raise Exception(f"There is no forall statmenent on line {lineNum}")
-        evidence.replace(replacements)
-        self.steps += [evidence.expr]
-        self.justifications += [f'For all elimination on line {lineNum}'] 
-        self.show() 
+            print(f"There is no forall statmenent on line {lineNum}")
+        else:
+            expr = evidence.replace(replacements)
+            self.steps += [expr]
+            self.justifications += [f'For all elimination on line {lineNum}'] 
+            self.show() 
     
     def thereexistsElim(self, lineNum, replacements): # We can only do this once!
         """
@@ -203,11 +223,12 @@ class Proof:
         """
         evidence = copy.deepcopy(self.steps[lineNum])
         if isinstance(evidence, thereexists) == False:
-            raise Exception(f"There is no there exists statmenent on line {lineNum}")
-        evidence.replace(replacements)
-        self.steps += [evidence.expr]
-        self.justifications += [f'There exists elimination on line {lineNum}'] 
-        self.show() 
+            print(f"There is no there exists statmenent on line {lineNum}")
+        else:
+            expr = evidence.replace(replacements)
+            self.steps += [expr]
+            self.justifications += [f'There exists elimination on line {lineNum}'] 
+            self.show() 
 
     ## Multiplication manipulation
     def leftMult (self, elem, lineNum):
@@ -219,6 +240,7 @@ class Proof:
         eq = copy.deepcopy(self.steps[lineNum])
         if isinstance(eq, Eq) == False:
             print (f"Line {lineNum} is not an equation")
+            return
         product = self.MultElem(elem, eq.LHS)
         result = Eq(product, self.MultElem(elem,eq.RHS), eq.parentgroup)
         self.steps += [result]
@@ -234,6 +256,7 @@ class Proof:
         eq = copy.deepcopy(self.steps[lineNum])
         if isinstance(eq, Eq) == False:
             print (f"Line {lineNum} is not an equation")
+            return
         product = self.MultElem(eq.LHS, elem)
         result = Eq(product, self.MultElem(eq.RHS,elem), eq.parentgroup)
         self.steps += [result]
@@ -265,6 +288,7 @@ class Proof:
         for i in multList: 
             if i != e: 
                 print ("Need a single element but given multiple")
+                return
         result=power(e,len(multList)) 
         self.steps += [result]
         self.justifications += ['Convert multiplications to equivalent powers'] 
@@ -279,7 +303,8 @@ class Proof:
         exp=self.exponent
         l=exp.split("+")
         if len(l)==1:
-            print ("No power addition to be split apart") 
+            print ("No power addition to be split apart")
+            return
         multList=[]
         for i in l: 
             elem=power(element,i)
@@ -298,7 +323,8 @@ class Proof:
         exp=self.exponent
         l=exp.split("*")
         if len(l)==1:
-            print ("No power multiplication to be split apart") 
+            print ("No power multiplication to be split apart")
+            return
         elem=element
         for i in l: 
             e=power(elem,i)
@@ -322,6 +348,7 @@ class Proof:
             self.show()
         else:
             print (f"The equations on lines {str(lineNum1)}, {str(lineNum2)} do not have the same right sides")
+            return
 
     def leftSidesEq(self, lineNum1, lineNum2):
         """
@@ -337,6 +364,7 @@ class Proof:
             self.show()
         else:
             print (f"The equations on lines {str(lineNum1)}, {str(lineNum2)} do not have the same left sides")
+            return
 
     def identleft(self, lineNum):
         """
@@ -361,6 +389,7 @@ class Proof:
                 # else we can't apply identity elimination 
             if l1==[]:
                 print ("identity can't be applied")
+                return
             newProduct = Mult(l1)
             ret = Eq(newProduct,evidence.RHS,evidence.parentgroup)
 
@@ -374,7 +403,7 @@ class Proof:
         :param lineNum: the line of the proof to be modified 
         """
         evidence = self.steps[lineNum]
-        if isinstance(evidence,Eq) and isinstance(evidence.arg2, Mult): 
+        if isinstance(evidence,Eq): 
             l = evidence.RHS.products
             l1=[]
             for i in range(len(l)-1):
@@ -391,6 +420,7 @@ class Proof:
                 # else we can't apply identity elimination 
             if l1==[]:
                 print ("identity can't be applied")
+                return
             newProduct = Mult(l1)
             ret = Eq(evidence.LHS,newProduct,evidence.parentgroup)
 
@@ -403,6 +433,7 @@ class Proof:
         Introduce a reflexive equality (like x=x)
         Necessary to show something equals something else when not given
         a starting equation
+        :param eq: The equality you want to introduce
         """
         if eq.LHS == eq.RHS:
             self.steps+=[eq]
@@ -412,7 +443,9 @@ class Proof:
             print ("this is not reflexive")
 
     def reduceLogic(self, lineNum):
-        """Recursively reduces a ND statement by pushing the nots in
+        """
+        Recursively reduces a ND statement by pushing in the nots
+        :param lineNum: the line of the proof to be modified 
         """
         evidence = self.steps[lineNum]
         if type(lineNum) in [And, Or, Implies, Not]:
@@ -423,7 +456,9 @@ class Proof:
             print ("this is not a logic statement")
 
     def introCases(self, case):
-        """Introduction of cases (law of excluded middle)
+        """
+        Introduction of cases (law of excluded middle)
+        :param case: the equation/logical statement of one case (the other is a not of that) 
         """
         case1 = case
         case2 = reduce(Not(case))
@@ -432,8 +467,11 @@ class Proof:
         self.show()
 
     def introSubproof(self, assum):
-        """This one returns so the user has access to the new subproof
+        """
+        WIP
+        This one returns so the user has access to the new subproof
         We will have to make show recursive to make the subproof steps show
+        :param assum: the assumption for the subproof
         """
         subproof = Proof(label="Subproof", steps=[self.steps], justifications = [self.justifications])
         self.steps += [subproof]
@@ -441,8 +479,68 @@ class Proof:
         return subproof
 
     def concludeSubproof(self, lineNum):
-        """You conclude a subproof from the parent subproof
+        """
+        WIP
+        You conclude a subproof from the parent subproof
         Work in progress, we should discuss how to do this.
+        :param lineNum: the conclusion of the subproof to turn into an implies
         """
         conc = Implies(self.assumption, self.steps[lineNum])
         return conc
+
+    def introElement(self,G, name):
+        """
+        Introduces an arbitrary element in G
+        Can be used as evidence for a forall introduction
+        :param G: the group the elemen is in
+        :param name: the name of the new element
+        """
+        if G.contains(name):
+            print(f"{name} is already in {G}")
+        else:
+            self.env[name] = G.newElement(name)
+            self.steps += [In(name, G)]
+            self.justifications += ["Introducing an arbitrary element"]
+            self.show()
+    
+    def forAllIntroduction(self, equationLine, vars, elemIntroLines):
+        '''
+        Creates a for all from an equation with arbitrary variables
+        :param equationLine: the equation
+        :param vars: the names of the arbitrary variables
+        :param elemIntroLines: the lines of the introductions of the variables (to show they are arbitrary)
+        '''
+        evidence = copy.deepcopy(self.steps[equationLine])
+        G = self.steps[elemIntroLines[0]].grp
+        #Checking that the lines introduce the arbitrary variables, and that the variables are all in the same group
+        for i in range(len(vars)):
+            v = vars[i]
+            l = elemIntroLines[i]
+            if self.steps[l].elem!=vars[i]:
+                print("Line", l, "does not introduce variable", v)
+                return
+            if self.steps[l].grp!=G:
+                print("Element", v, "is not in group", G)
+                return
+        #If you make it here, this is a valid for all intro
+        self.steps+=[forall(vars,G,self.steps[equationLine])]
+        self.justifications+=["For all introduction"]
+        self.show()
+
+    def closure(self,G,a,b):
+        '''
+        Introduces ab as an element of G by closure
+        :param G: the group a,b are in
+        :param a: element a
+        :param b: element b
+        '''
+        if G.contains(a) and G.contains(b):
+            G.mulElements(a,b)
+            self.steps+=[In(G,Mult([a,b]))]
+            self.justifications+=["Closure"]
+            self.show()
+        else:
+            if not G.contains(a):
+                print(f"{a} is not in {G}")
+            else:
+                print(f"{b} is not in {G}")
