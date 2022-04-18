@@ -4,6 +4,7 @@ from group import *
 from integer import *
 from logicObjects import *
 
+
 G = group('G','*')
 abelianG = forall(['x', 'y'], G, Eq(Mult(['x', 'y']), Mult(['y','x']),G))
 p = Proof('Simple Abelian Proof', forall(['x'], G, Eq(Mult(['x', 'x']), G.elements['e'],G)), goal=abelianG)
