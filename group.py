@@ -54,6 +54,9 @@ class group:
     def addGroupProperty(self, property, propertyName):
         self.groupProperties[propertyName] = property
     
+    def deleteGroupProperty(self, propertyName):
+        del self.groupProperties[propertyName]
+    
     def addElementProperty(self, property, elementName):
         if elementName in self.elements or elementName == self.identity_identifier:
             self.elementProperties[elementName] = property

@@ -1,4 +1,5 @@
 from re import L
+
 from element import *
 from group import *
 from integer import *
@@ -13,7 +14,7 @@ class Proof:
         self.steps = []
         self.justifications = []
         self.env = {}
-        self.depth = 0
+        self.subproof = None
     
     def qed(self, lineNum):
         if self.goal == self.steps[lineNum]:
@@ -32,8 +33,13 @@ class Proof:
         print('')
         print('Proof : ' + self.label)
         print('--------------------------------')
+        subProofIndent = "" # might need to change, this is just for now
         for i in range(len(self.steps)):
-            print(str(i) + ': ' + str(self.steps[i]) + '\t' + str(self.justifications[i]))
+            if self.justifications[i] == "Intro Subproof Assumption":
+                subProofIndent += '\t'
+            if self.justifications[i] == "Concluded Subproof":
+                subProofIndent = subProofIndent.replace('\t', '', 1)
+            print(subProofIndent + str(i) + ': ' + str(self.steps[i]) + '\t' + str(self.justifications[i]))
         print('')
 
     def introAssumption(self, expr):
@@ -46,10 +52,6 @@ class Proof:
         self.justifications += ["introGroup"]
         self.show()
 
-    def introGroupElement(self, elementName, groupName):
-        self.steps += [groupElement(elementName, groupName)]
-        self.justifications += ['introGroupElement']
-        default = {"in":[groupName], "prop":[]}
     def introGroup(self, grp):
         self.steps += [grp]
         self.justifications += ["introGroup"]
@@ -116,29 +118,24 @@ class Proof:
         else:
             print("Cannot substitute without an Equation")
     
-    def modus(self, lineNum1, lineNum2):
+    def modus(self, lineNum1, lineNums): # lineNums because multiple assumptions may be neccessary (I think)
         """
         modus pones: given A->B and A, the function concludes B and add it as a new line in the proof
         :param lineNum1 and lineNum2: one line in the proof where the person showed A->B and one line the proof where the person showed A
         """
         ev1 = self.steps[lineNum1]
-        ev2 = self.steps[lineNum2]
+        ev2 = []
+        for line in lineNums:
+            ev2 += self.steps[line]
         if isinstance(ev1, Implies): 
             A = ev1.assum
             B = ev1.conc
             if A == ev2: 
                 self.steps += [B]
-                self.justifications += [f'Modus Ponens on {str(lineNum1)}, {str(lineNum2)}'] 
+                self.justifications += [f'Modus Ponens on {str(lineNum1)}, {str(lineNums)}'] 
                 self.show() 
-        elif isinstance(ev2, Implies):
-            A = ev2.assum
-            B = ev2.conc
-            if A == ev1: 
-                self.steps += [B]
-                self.justifications += [f'Modus Ponens on {str(lineNum2)}, {str(lineNum1)}'] 
-                self.show()
         else:
-            print (f"Neither of {str(lineNum1)}, {str(lineNum2)} are an implies statement")
+            print (f"Line {str(lineNum1)} is not an implies statement")
 
     def inverseElimRHS(self,lineNum):
         """
@@ -473,10 +470,10 @@ class Proof:
         We will have to make show recursive to make the subproof steps show
         :param assum: the assumption for the subproof
         """
-        subproof = Proof(label="Subproof", steps=[self.steps], justifications = [self.justifications])
-        self.steps += [subproof]
-        self.justifications += ["intro subproof"]
-        return subproof
+        subproof = Proof(label="Subproof", assumption=assum, steps=[self.steps], justifications = [self.justifications]) # how do we deal with this?
+        self.steps += [assum]
+        self.justifications += ["Intro Subproof Assumption"] # How can we track subproof throughout parent proof?
+        self.show()
 
     def concludeSubproof(self, lineNum):
         """
@@ -485,8 +482,13 @@ class Proof:
         Work in progress, we should discuss how to do this.
         :param lineNum: the conclusion of the subproof to turn into an implies
         """
-        conc = Implies(self.assumption, self.steps[lineNum])
-        return conc
+        evidence = self.steps[lineNum]
+        if isinstance(evidence, Not):
+            self.steps += [evidence.arg]
+            self.justifications += ["Concluded Subproof"]
+            self.show()
+        else:
+            print(f"Cannot conclude subproof") # THIS IS A MESS, NEED TO ACTUALLY CATCH ERRORS
 
     def introElement(self,G, name):
         """
@@ -544,3 +546,73 @@ class Proof:
                 print(f"{a} is not in {G}")
             else:
                 print(f"{b} is not in {G}")
+
+    def cancelRight(self, lineNum, mult):
+        '''
+        Cancels element from right side of multiplication if it exists 
+        :param lineNum: the line where the equation resides
+        :param mult: the list of elements to eliminate
+        '''
+        evidence = self.steps[lineNum]
+        if isinstance(evidence, Eq):
+            rhselems = evidence.RHS.products
+            lhselems = evidence.LHS.products
+            l = -1*len(mult)
+            if rhselems[l:] == mult and lhselems[l:] == mult:
+                self.steps += [Eq( Mult(lhselems[:l]), Mult(rhselems[:l]) , evidence.parentgroup )]
+                self.justifications += [f"Right side cancellation of {mult} on line {lineNum}"]
+                self.show()
+            else:
+                print(f"It seems like the right hand sides on line {lineNum} are equal to {mult}")
+        else:
+            print(f"It doesn't seem like line {lineNum} contains an equation")
+
+    def cancelLeft(self, lineNum, mult):
+        '''
+        Cancels element from left side of multiplication if it exists 
+        :param lineNum: the line where the equation resides
+        :param mult: the list of elements to eliminate
+        '''
+        evidence = self.steps[lineNum]
+        if isinstance(evidence, Eq):
+            rhselems = evidence.RHS.products
+            lhselems = evidence.LHS.products
+            l = len(mult)
+            if rhselems[:l] == mult and lhselems[:l] == mult:
+                self.steps += [Eq( Mult(lhselems[l:]), Mult(rhselems[l:]) , evidence.parentgroup )]
+                self.justifications += [f"Right side cancellation of {mult} on line {lineNum}"]
+                self.show()
+            else:
+                print(f"It seems like the left hand sides on line {lineNum} are equal to {mult}")
+        else:
+            print(f"It doesn't seem like line {lineNum} contains an equation")
+
+    def switchSidesOfEqual(self, lineNum):
+        '''
+        Switches an equality like x=y to become y=x
+        :param lineNum: the line where the equality to be flipped is on 
+        '''
+        evidence = self.steps[lineNum]
+        if isinstance(evidence, Eq):
+            rhs = evidence.RHS
+            lhs = evidence.LHS
+            self.steps += [Eq(rhs , lhs , evidence.parentgroup )]
+            self.justifications += [f"Switched sides of line {lineNum}"]
+            self.show()
+        else:
+            print(f"Hmm, it doesn't look like line {lineNum} isn't an equality")
+        
+    def notElim(self, lineNum1, lineNum2):
+        '''
+        Eliminate a not into a contradiction
+        :param lineNum1: the line containing the not statement
+        :param lineNum2: the line which has the real statement
+        '''
+        evidence1 = self.steps[lineNum1]
+        if isinstance(evidence1, Not):
+            result = evidence1.elim(self.steps[lineNum2])
+            self.steps += [result]
+            self.justifications += [f'Contradiction from lines {lineNum1} and {lineNum2}']
+            self.show()
+        else:
+            print(f"The statement on line {lineNum1} isn't a Not")

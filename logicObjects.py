@@ -77,10 +77,16 @@ class Not:
     def elim(self, contradiction):
         if self.arg == contradiction:
             return Bottom()
+    
+    def __repr__(self):
+        return "Not " + str(self.arg)
 
 class Bottom:
     def elim(self, conclusion):
         return conclusion
+    
+    def __repr__(self):
+        return "⊥"
 
 class In:
     def __init__(self, elem, grp):
@@ -188,6 +194,14 @@ class thereexists:
         else:
             print("Replacements is not the same length as the list of existential elements")
 
+## Unique class
+
+class uniqueElementProperty:
+    def __init__ (self, prpty, pg):
+        self.property = prpty
+        self.group = pg
+
+
 ## Special types of elements/groups
 
 class identity(element):
@@ -202,9 +216,9 @@ class identity(element):
 
 class inverse(element):
     def __init__(self, elementName, pg):
-        super().__init__(elementName, pg)
-        lhs = Mult([arbitrary('x',pg),elementName]) # self or elementName?
-        rhs = Mult([arbitrary('x',pg)])
-        eq = Eq(lhs,rhs,pg)
-        idnty = forall([arbitrary('x',pg)], pg, eq)
-        pg.addElementProperty(idnty,elementName)
+        inverseName = elementName + "^(-1)"
+        super().__init__(inverseName, pg)
+        lhs = Mult([inverseName,elementName]) # self or elementName?
+        rhs = Mult([pg.identity_identifier])
+        inverseEq = Eq(lhs,rhs,pg)
+        pg.addGroupProperty(inverseEq, "Inverse of " + elementName)
