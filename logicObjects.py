@@ -70,6 +70,17 @@ class Implies: # expand a little more functionality
         if arg==self.assum:
             return self.conc
 
+    def __eq__(self, other):
+        return self.assum == other.assum and self.conc == other.conc
+
+    def __repr__(self):
+        assumptionstr = ""
+        for assumption in self.assum:
+            assumptionstr += str(assumption)
+            assumptionstr += ", "
+        assumptionstr = assumptionstr[:-2]
+        return  assumptionstr + " → " +  str(self.conc)
+
 class Not:
     def __init__(self, arg):
         self.arg = arg

@@ -616,3 +616,16 @@ class Proof:
             self.show()
         else:
             print(f"The statement on line {lineNum1} isn't a Not")
+
+    def impliesIntroduction(self, lineNumsAssums, lineNumConc): # needs work, a lot of it
+        '''
+        Introduce an implication based on assumptions and a conclusion
+        :param lineNumsAssums: the lines containing the assumptions
+        :param lineNumConc: the line to conclude
+        '''
+        assums = []
+        for line in lineNumsAssums:
+            assums.append(self.steps[line])
+        self.steps += [Implies(assums,self.steps[lineNumConc])]
+        self.justifications += [f"Introduced implies based on assumptions on lines {lineNumsAssums} to conclude line {lineNumConc}"]
+        self.show()
