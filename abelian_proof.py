@@ -13,7 +13,7 @@ p.introElement(G,'b')
 p.closure(G,'a','b')
 p.accessAssumption()
 p.forallElim(4,['a * b'])
-p.leftMult(G.elements['a'],5)
+p.leftMult(G.elements['a'],5) # G.elements should be a function not a dictionary
 p.forallElim(4,['a'])
 p.substituteRHS(6,7)
 p.identleft(8)
