@@ -44,7 +44,7 @@ class Proof:
         while i < len(self.steps):
             if isinstance(self.steps[i],Proof):
                 self.steps[i].show()
-                i+=len(self.steps[i].steps)
+                i+=len(self.steps[i].steps)-self.steps[i].linestart-1
             else:
                 print("\t"*self.depth + str(i) + ': ' + str(self.steps[i]) + '\t' + str(self.justifications[i]))
             i+=1
@@ -493,8 +493,8 @@ class Proof:
         evidence = self.steps[-1]
         if isinstance(evidence, Proof):
             conc = Implies(evidence.assumption,evidence.steps[lineNum])
-            self.steps += [None]*len(evidence.steps)
-            self.justifications += [None]*len(evidence.steps)
+            self.steps += [None]*(len(evidence.steps)-evidence.linestart-1)
+            self.justifications += [None]*((len(evidence.steps))-evidence.linestart-1)
             self.steps += [conc]
             self.justifications += ["Conclusion of subproof"]
         else:
