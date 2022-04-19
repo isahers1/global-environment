@@ -246,7 +246,7 @@ class Proof:
             print (f"Line {lineNum} is not an equation")
             return
         product = self.MultElem(elem, eq.LHS)
-        result = Eq(product, self.MultElem(elem,eq.RHS), eq.parentgroup)
+        result = Eq(product, self.MultElem(elem,eq.RHS), eq.group)
         self.steps += [result]
         self.justifications += ['Left multiply line {lineNum} by ' +str(elem) ] 
         self.show()
@@ -262,7 +262,7 @@ class Proof:
             print (f"Line {lineNum} is not an equation")
             return
         product = self.MultElem(eq.LHS, elem)
-        result = Eq(product, self.MultElem(eq.RHS,elem), eq.parentgroup)
+        result = Eq(product, self.MultElem(eq.RHS,elem), eq.group)
         self.steps += [result]
         self.justifications += [f'Right multiply line {lineNum} by ' +str(elem)] 
         self.show()
@@ -358,8 +358,8 @@ class Proof:
         """
         l1 = self.steps[lineNum1]
         l2 = self.steps[lineNum2]
-        if l1.RHS == l2.RHS and l1.parentgroup == l2.parentgroup:
-            self.steps += [Eq(l1.LHS,l2.LHS, l1.parentgroup)]
+        if l1.RHS == l2.RHS and l1.group == l2.group:
+            self.steps += [Eq(l1.LHS,l2.LHS, l1.group)]
             self.justifications += [f"Equations with same right side on lines {str(lineNum1)}, {str(lineNum2)}"]
             self.show()
         else:
@@ -374,8 +374,8 @@ class Proof:
         """
         l1 = self.steps[lineNum1]
         l2 = self.steps[lineNum2]
-        if l1.LHS == l2.LHS and l1.parentgroup == l2.parentgroup:
-            self.steps += [Eq(l1.RHS,l2.RHS, l1.parentgroup)]
+        if l1.LHS == l2.LHS and l1.group == l2.group:
+            self.steps += [Eq(l1.RHS,l2.RHS, l1.group)]
             self.justifications += [f"Equations with same left side on lines {str(lineNum1)}, {str(lineNum2)}"]
             self.show()
         else:
@@ -407,7 +407,7 @@ class Proof:
                 print ("identity can't be applied")
                 return
             newProduct = Mult(l1)
-            ret = Eq(newProduct,evidence.RHS,evidence.parentgroup)
+            ret = Eq(newProduct,evidence.RHS,evidence.group)
         else: 
             print(f"Expected an equation on line {lineNum} but received {type(evidence)}")
             return 
@@ -441,7 +441,7 @@ class Proof:
                 print ("identity can't be applied")
                 return
             newProduct = Mult(l1)
-            ret = Eq(evidence.LHS,newProduct,evidence.parentgroup)
+            ret = Eq(evidence.LHS,newProduct,evidence.group)
         else: 
             print(f"Expected an equation on line {lineNum} but received {type(evidence)}")
             return 
@@ -541,8 +541,8 @@ class Proof:
         :param vars: the names of the arbitrary variables
         :param elemIntroLines: the lines of the introductions of the variables (to show they are arbitrary)
         '''
-        evidence = copy.deepcopy(self.steps[equationLine])
-        G = self.steps[elemIntroLines[0]].grp
+        evidence = copy.deepcopy(self.steps[equationLine]) # Mo, do you need this?
+        G = self.steps[elemIntroLines[0]].group
         #Checking that the lines introduce the arbitrary variables, and that the variables are all in the same group
         for i in range(len(vars)):
             v = vars[i]
@@ -550,11 +550,11 @@ class Proof:
             if self.steps[l].elem!=vars[i]:
                 print("Line", l, "does not introduce variable", v)
                 return
-            if self.steps[l].grp!=G:
+            if self.steps[l].group!=G:
                 print("Element", v, "is not in group", G)
                 return
         #If you make it here, this is a valid for all intro
-        self.steps+=[forall(vars,G,self.steps[equationLine])]
+        self.steps+=[forall(vars,G,evidence)]
         self.justifications+=["For all introduction"]
         self.show()
 
@@ -588,11 +588,11 @@ class Proof:
             lhselems = evidence.LHS.products
             l = -1*len(mult)
             if rhselems[l:] == mult and lhselems[l:] == mult:
-                self.steps += [Eq( Mult(lhselems[:l]), Mult(rhselems[:l]) , evidence.parentgroup )]
+                self.steps += [Eq( Mult(lhselems[:l]), Mult(rhselems[:l]) , evidence.group )]
                 self.justifications += [f"Right side cancellation of {mult} on line {lineNum}"]
                 self.show()
             else:
-                print(f"It seems like the right hand sides on line {lineNum} are equal to {mult}")
+                print(f"It seems like the right hand sides on line {lineNum} are not equal to {mult}")
         else:
             print(f"It doesn't seem like line {lineNum} contains an equation")
 
@@ -608,11 +608,11 @@ class Proof:
             lhselems = evidence.LHS.products
             l = len(mult)
             if rhselems[:l] == mult and lhselems[:l] == mult:
-                self.steps += [Eq( Mult(lhselems[l:]), Mult(rhselems[l:]) , evidence.parentgroup )]
+                self.steps += [Eq( Mult(lhselems[l:]), Mult(rhselems[l:]) , evidence.group )]
                 self.justifications += [f"Right side cancellation of {mult} on line {lineNum}"]
                 self.show()
             else:
-                print(f"It seems like the left hand sides on line {lineNum} are equal to {mult}")
+                print(f"It seems like the left hand sides on line {lineNum} are not equal to {mult}")
         else:
             print(f"It doesn't seem like line {lineNum} contains an equation")
 
@@ -625,7 +625,7 @@ class Proof:
         if isinstance(evidence, Eq):
             rhs = evidence.RHS
             lhs = evidence.LHS
-            self.steps += [Eq(rhs , lhs , evidence.parentgroup )]
+            self.steps += [Eq(rhs , lhs , evidence.group )]
             self.justifications += [f"Switched sides of line {lineNum}"]
             self.show()
         else:
@@ -644,7 +644,7 @@ class Proof:
             self.justifications += [f'Contradiction from lines {lineNum1} and {lineNum2}']
             self.show()
         else:
-            print(f"The statement on line {lineNum1} isn't a Not")
+            print(f"The statement on line {lineNum1} isn't a Not statement")
 
     def impliesIntroduction(self, lineNumsAssums, lineNumConc): # needs work, a lot of it
         '''
@@ -676,5 +676,5 @@ class Proof:
             else:
                 print("You must choose argument 1 or 2")
         else:
-            print("The provided line is not an and statement")
+            print(f"The statement on line {lineNum} isn't an And statement")
     

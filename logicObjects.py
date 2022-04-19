@@ -108,16 +108,16 @@ class Bottom:
 class In:
     def __init__(self, elem, grp):
         self.elem = elem
-        self.grp = grp
+        self.group = grp
 
     def __repr__(self):
-        return str(self.elem) + " ∈ " + str(self.grp)
+        return str(self.elem) + " ∈ " + str(self.group)
 
 class Eq:
     def __init__(self,LHS,RHS,pg):
         self.LHS = LHS
         self.RHS = RHS
-        self.parentgroup = pg
+        self.group = pg
 
     def __repr__(self):
         return str(self.LHS) + ' = ' + str(self.RHS)
@@ -131,7 +131,7 @@ class Eq:
             return False
 
     def replace(self, var, expr):
-        return Eq(self.LHS.replace(var,expr), self.RHS.replace(var,expr), self.parentgroup)
+        return Eq(self.LHS.replace(var,expr), self.RHS.replace(var,expr), self.group)
 
 def reduce(exp):
     if isinstance(exp, Eq):
