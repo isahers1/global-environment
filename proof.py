@@ -689,9 +689,11 @@ class Proof:
             if n==1:
                 self.steps += [evidence.arg1]
                 self.justifications += ["And elimination"]
+                self.show()
             elif n==2:
                 self.steps += [evidence.arg2]
                 self.justifications += ["And elimination"]
+                self.show()
             else:
                 print('\n'+"You must choose argument 1 or 2")
         else:
