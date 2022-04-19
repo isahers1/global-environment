@@ -1,5 +1,6 @@
 import copy
 from dataclasses import replace
+from re import L
 
 from element import *
 
@@ -49,6 +50,14 @@ class And:
         if num==2:
             return self.arg2
 
+    def __eq__(self,other):
+        if not isinstance(other,And):
+            return False
+        return (self.arg1==other.arg1 and self.arg2==other.arg2) or (self.arg1==other.arg2 and self.arg2==other.arg1)
+
+    def __repr__(self):
+        return "("+ str(self.arg1)+" and "+str(self.arg2)+ ")"
+
 class Or:
     def __init__(self, arg1, arg2):
         self.arg1 = arg1
@@ -71,15 +80,12 @@ class Implies: # expand a little more functionality
             return self.conc
 
     def __eq__(self, other):
+        if not isinstance(other,Implies):
+            return False
         return self.assum == other.assum and self.conc == other.conc
 
     def __repr__(self):
-        assumptionstr = ""
-        for assumption in self.assum:
-            assumptionstr += str(assumption)
-            assumptionstr += ", "
-        assumptionstr = assumptionstr[:-2]
-        return  assumptionstr + " → " +  str(self.conc)
+        return  str(self.assum) + " → " +  str(self.conc)
 
 class Not:
     def __init__(self, arg):

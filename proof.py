@@ -5,18 +5,21 @@ from group import *
 from integer import *
 from logicObjects import *
 
-
 class Proof:
-    def __init__(self, label, assumption, goal=None, steps=[], justifications = []): # make goal optional
+    def __init__(self, label, assumption, goal=None, steps=[], justifications = [], depth=0, linestart=0): # make goal optional
+        self.linestart = linestart
         self.label = label
+        self.depth = depth
         self.assumption = assumption
         self.goal = goal # this is an implies
-        self.steps = []
-        self.justifications = []
+        self.steps = steps
+        self.justifications = justifications
         self.env = {}
         self.subproof = None
     
     def qed(self, lineNum):
+        print(self.goal, self.steps[lineNum])
+
         if self.goal == self.steps[lineNum]:
             self.steps+=["□"]
             self.justifications += ["QED"]
@@ -30,17 +33,21 @@ class Proof:
         self.show()
         
     def show(self):
-        print('')
-        print('Proof : ' + self.label)
-        print('--------------------------------')
-        subProofIndent = "" # might need to change, this is just for now
-        for i in range(len(self.steps)):
-            if self.justifications[i] == "Intro Subproof Assumption":
-                subProofIndent += '\t'
-            if self.justifications[i] == "Concluded Subproof":
-                subProofIndent = subProofIndent.replace('\t', '', 1)
-            print(subProofIndent + str(i) + ': ' + str(self.steps[i]) + '\t' + str(self.justifications[i]))
-        print('')
+        if self.depth==0:
+            print('')
+            print('Proof : ' + self.label)
+            print('--------------------------------')
+        else:
+            print('Subproof : assume ' + str(self.assumption))
+            print('--------------------------------')
+        i = self.linestart
+        while i < len(self.steps):
+            if isinstance(self.steps[i],Proof):
+                self.steps[i].show()
+                i+=len(self.steps[i].steps)
+            else:
+                print("\t"*self.depth + str(i) + ': ' + str(self.steps[i]) + '\t' + str(self.justifications[i]))
+            i+=1
 
     def introAssumption(self, expr):
         self.steps += [expr]
@@ -470,10 +477,11 @@ class Proof:
         We will have to make show recursive to make the subproof steps show
         :param assum: the assumption for the subproof
         """
-        subproof = Proof(label="Subproof", assumption=assum, steps=[self.steps], justifications = [self.justifications]) # how do we deal with this?
-        self.steps += [assum]
-        self.justifications += ["Intro Subproof Assumption"] # How can we track subproof throughout parent proof?
+        subproof = Proof(label="Subproof", assumption=assum, steps=copy.deepcopy(self.steps), justifications=copy.deepcopy(self.justifications), depth=self.depth+1, linestart=len(self.steps))
         self.show()
+        self.steps+=[subproof]
+        self.justifications+=["IntroSubproof"]
+        return subproof
 
     def concludeSubproof(self, lineNum):
         """
@@ -482,13 +490,16 @@ class Proof:
         Work in progress, we should discuss how to do this.
         :param lineNum: the conclusion of the subproof to turn into an implies
         """
-        evidence = self.steps[lineNum]
-        if isinstance(evidence, Not):
-            self.steps += [evidence.arg]
-            self.justifications += ["Concluded Subproof"]
-            self.show()
+        evidence = self.steps[-1]
+        if isinstance(evidence, Proof):
+            conc = Implies(evidence.assumption,evidence.steps[lineNum])
+            self.steps += [None]*len(evidence.steps)
+            self.justifications += [None]*len(evidence.steps)
+            self.steps += [conc]
+            self.justifications += ["Conclusion of subproof"]
         else:
-            print(f"Cannot conclude subproof") # THIS IS A MESS, NEED TO ACTUALLY CATCH ERRORS
+            print("You can only conclude a subproof right after one")
+        self.show()
 
     def introElement(self,G, name):
         """
@@ -629,3 +640,23 @@ class Proof:
         self.steps += [Implies(assums,self.steps[lineNumConc])]
         self.justifications += [f"Introduced implies based on assumptions on lines {lineNumsAssums} to conclude line {lineNumConc}"]
         self.show()
+
+    def andElim(self, lineNum, n):
+        '''
+        Eliminate a not into a contradiction
+        :param lineNum1: the line containing the not statement
+        :param lineNum2: the line which has the real statement
+        '''
+        evidence = self.steps[lineNum]
+        if isinstance(evidence, And):
+            if n==1:
+                self.steps += [evidence.arg1]
+                self.justifications += ["And elimination"]
+            elif n==2:
+                self.steps += [evidence.arg2]
+                self.justifications += ["And elimination"]
+            else:
+                print("You must choose argument 1 or 2")
+        else:
+            print("The provided line is not an and statement")
+    
