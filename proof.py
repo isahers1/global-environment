@@ -102,9 +102,9 @@ class Proof:
                 self.justifications += [f'Replaced all instances of {ev2.LHS} with {ev2.RHS} on line {lineNum1}']
                 self.show()
             else:
-                print(f"The statement on line {lineNum2} is not an equality, substitutition is not possible")
+                print('\n'+f"The statement on line {lineNum2} is not an equality, substitutition is not possible")
         else:
-            print(f"The statement on line {lineNum1} is not an equality, substitutition is not possible")
+            print('\n'+f"The statement on line {lineNum1} is not an equality, substitutition is not possible")
 
     def substituteLHS(self, lineNum1, lineNum2):
         """
@@ -121,9 +121,9 @@ class Proof:
                 self.justifications += [f'Replaced all instances of {ev2.RHS} with {ev2.LHS} on line {lineNum1}']
                 self.show()
             else:
-                print(f"The statement on line {lineNum2} is not an equality, substitutition is not possible")
+                print('\n'+f"The statement on line {lineNum2} is not an equality, substitutition is not possible")
         else:
-            print(f"The statement on line {lineNum1} is not an equality, substitutition is not possible")
+            print('\n'+f"The statement on line {lineNum1} is not an equality, substitutition is not possible")
     
     def modus(self, lineNum1, lineNums): # lineNums because multiple assumptions may be neccessary (I think)
         """
@@ -143,9 +143,9 @@ class Proof:
                     self.justifications += [f'Modus Ponens on {str(lineNum1)}, {str(lineNums)}'] 
                     self.show() 
             else:
-                print (f"Line {str(lineNum1)} is not an implies statement")
+                print ('\n'+f"Line {str(lineNum1)} is not an implies statement")
         else:
-            print("The second argument should be a list, maybe you only have one assumption - make sure to put it into a singleton list")
+            print('\n'+"The second argument should be a list, maybe you only have one assumption - make sure to put it into a singleton list")
 
     def inverseElimRHS(self,lineNum):
         """
@@ -170,13 +170,13 @@ class Proof:
                     lawApplied=True
                     break
             if lawApplied==False:
-                print (f"Inverse laws can't be applied on line {lineNum}")
-                return
-            self.steps += [newProducts]
-            self.justifications += [f'Right hand side inverse elimination on line {lineNum}'] 
-            self.show()
+                print ('\n'+f"Inverse laws can't be applied on line {lineNum}")
+            else:
+                self.steps += [newProducts]
+                self.justifications += [f'Right hand side inverse elimination on line {lineNum}'] 
+                self.show()
         else:
-            print(f"It doesn't seem like line {lineNum} contains an equation")
+            print('\n'+f"It doesn't seem like line {lineNum} contains an equation")
         
     
     def inverseElimLHS(self,lineNum):
@@ -202,13 +202,13 @@ class Proof:
                     lawApplied=True
                     break
             if lawApplied==False:
-                print (f"Inverse laws can't be applied on line {lineNum}")
-                return
-            self.steps += [newProducts]
-            self.justifications += [f'Left hand side inverse elimination on line {lineNum}'] 
-            self.show()
+                print ('\n'+f"Inverse laws can't be applied on line {lineNum}")
+            else:
+                self.steps += [newProducts]
+                self.justifications += [f'Left hand side inverse elimination on line {lineNum}'] 
+                self.show()
         else:
-            print(f"It doesn't seem like line {lineNum} contains an equation")
+            print('\n'+f"It doesn't seem like line {lineNum} contains an equation")
     
     ## For all and there exists elimination
      
@@ -219,13 +219,14 @@ class Proof:
         :param replacements: the list of elements to replace the existential elements
         """
         evidence = copy.deepcopy(self.steps[lineNum])
-        if isinstance(evidence, forall) == False:
-            print(f"There is no forall statmenent on line {lineNum}")
-        else:
+        if isinstance(evidence, forall):
             expr = evidence.replace(replacements)
             self.steps += [expr]
             self.justifications += [f'For all elimination on line {lineNum}'] 
             self.show() 
+        else:
+            print('\n'+f"There is no forall statmenent on line {lineNum}")
+            
     
     def thereexistsElim(self, lineNum, replacements): # We can only do this once!
         """
@@ -234,13 +235,14 @@ class Proof:
         :param replacements: the list of elements to replace the existential elements
         """
         evidence = copy.deepcopy(self.steps[lineNum])
-        if isinstance(evidence, thereexists) == False:
-            print(f"There is no there exists statmenent on line {lineNum}")
-        else:
+        if isinstance(evidence, thereexists):
             expr = evidence.replace(replacements)
             self.steps += [expr]
             self.justifications += [f'There exists elimination on line {lineNum}'] 
             self.show() 
+        else:
+            print('\n' + f"There is no there exists statmenent on line {lineNum}")
+            
 
     ## Multiplication manipulation
     def leftMult(self, elemName, lineNum):
@@ -259,9 +261,9 @@ class Proof:
                 self.justifications += ['Left multiply line {lineNum} by ' +str(elem) ] 
                 self.show()
             else:
-                print("The element " + elemName + " is not in the group " + eq.group)
+                print('\n' + "The element " + elemName + " is not in the " + str(eq.group))
         else:
-            print (f"Line {lineNum} is not an equation")
+            print ('\n' + f"Line {lineNum} is not an equation")
 
     def rightMult (self, elemName, lineNum):
         """
@@ -279,67 +281,70 @@ class Proof:
                 self.justifications += ['Right multiply line {lineNum} by ' +str(elem) ] 
                 self.show()
             else:
-                print("The element " + elemName + " is not in the group " + eq.group)
+                print('\n' + "The element " + elemName + " is not in the " + str(eq.group))
         else:
-            print (f"Line {lineNum} is not an equation")
+            print ('\n' + f"Line {lineNum} is not an equation")
     ##power methods 
     def breakPower(self,input):
         """
         Given an expression like e^a where a is a python integer, return a mult object equivalent to e^a
         :param power: the power to be converted to mult
         """  
-        if isinstance(input,power) == False: 
-            print (f"Expected a power object but received type {type(input)}")
-            return  
-        exp=input.exponent   
-        element = input.element 
-        multList=[]
-        for i in range(exp):
-            multList.append(element)
-        self.steps += [Mult(multList)]
-        self.justifications += ['Convert power object to mult object'] 
-        self.show()
+        if isinstance(input,power):  
+            exp=input.exponent   
+            element = input.element 
+            multList=[]
+            for i in range(exp):
+                multList.append(element)
+            self.steps += [Mult(multList)]
+            self.justifications += ['Convert power object to mult object'] 
+            self.show()
+        else:
+            print ('\n'+f"Expected a power object but received type {type(input)}")
 
     def combinePower(self, mult):
         """
         Given a mult object with a single element, convert it to a power object (for example turning e*e*e to e^3)
         :param mult: the mult object to be converted 
         """  
-        if isinstance(mult,Mult) == False: 
-            print (f"Expected a Mult object but received type {type(mult)}")
-            return 
-        multList=mult.elemList
-        e=multList[0]
-        for i in multList: 
-            if i != e: 
-                print ("Need a single element but given multiple")
-                return
-        result=power(e,len(multList)) 
-        self.steps += [result]
-        self.justifications += ['Convert multiplications to equivalent powers'] 
-        self.show()
+        if isinstance(mult,Mult): 
+            multList=mult.elemList
+            e=multList[0]
+            singletonCheck = True
+            for i in multList: 
+                if i != e: 
+                    singletonCheck = False
+            if singletonCheck == False:
+                print ('\n' +"Need a single element but given multiple")
+            else:
+                result=power(e,len(multList)) 
+                self.steps += [result]
+                self.justifications += ['Convert multiplications to equivalent powers'] 
+                self.show()
+        else:
+            print ('\n' +f"Expected a Mult object but received type {type(mult)}")
 
     def splitPowerAddition(self,input):
         """
         Simplify power objects: Given an expression e^a+b, convert to e^a*e^b. Given an expression e^a*b=(e^a)^b
         :param power: the power object with addition in exponent to be modified
         """  
-        if isinstance(input, power) == False: 
-            print (f"Expected a power object but received type {type(input)}")
-            return             
-        element = input.element
-        exp=input.exponent
-        l=exp.split("+")
-        if len(l)==1:
-            print ("No power addition to be split apart")
-            return
-        multList=[]
-        for i in l: 
-            elem=power(element,i)
-            multList.append(elem)
-        self.steps += [Mult(multList)]
-        self.justifications += ["split up power with addition in exponents"] 
-        self.show()       
+        if isinstance(input, power):            
+            element = input.element
+            exp=input.exponent
+            l=exp.split("+")
+            if len(l)==1:
+                print ('\n'+"No power addition to be split apart")
+            else:
+                multList=[]
+                for i in l: 
+                    elem=power(element,i)
+                    multList.append(elem)
+                self.steps += [Mult(multList)]
+                self.justifications += ["Split up power with addition in exponents"] 
+                self.show()          
+        else:
+            print ('\n'+f"Expected a power object but received type {type(input)}")     
              
 
     def splitPowerMult(self,input):
@@ -347,22 +352,22 @@ class Proof:
         Simplify power objects: Given an expression e^a*b=(e^a)^b
         :param lineNum: the power object with mult in exponent to be modified
         """ 
-        if isinstance(input, power) == False: 
-            print (f"Expected a power object but received type {type(input)}")
-            return        
-        element = input.element
-        exp=input.exponent
-        l=exp.split("*")
-        if len(l)==1:
-            print ("No power multiplication to be split apart")
-            return
-        elem=element
-        for i in l: 
-            e=power(elem,i)
-            elem=e
-        self.steps += [elem]
-        self.justifications += ["split up power with multiplication in exponents"] 
-        self.show()
+        if isinstance(input, power) == False:       
+            element = input.element
+            exp=input.exponent
+            l=exp.split("*")
+            if len(l)==1:
+                print ('\n'+"No power multiplication to be split apart")
+            else:
+                elem=element
+                for i in l: 
+                    e=power(elem,i)
+                    elem=e
+                self.steps += [elem]
+                self.justifications += ["Split up power with multiplication in exponents"] 
+                self.show()
+        else:
+            print ('\n'+f"Expected a power object but received type {type(input)}")
     
     ## Identity and equality elimination
     def rightSidesEq(self, lineNum1, lineNum2):
@@ -378,8 +383,7 @@ class Proof:
             self.justifications += [f"Equations with same right side on lines {str(lineNum1)}, {str(lineNum2)}"]
             self.show()
         else:
-            print (f"The equations on lines {str(lineNum1)}, {str(lineNum2)} do not have the same right sides")
-            return
+            print ('\n' +f"The equations on lines {str(lineNum1)}, {str(lineNum2)} do not have the same right sides")
 
     def leftSidesEq(self, lineNum1, lineNum2):
         """
@@ -394,8 +398,7 @@ class Proof:
             self.justifications += [f"Equations with same left side on lines {str(lineNum1)}, {str(lineNum2)}"]
             self.show()
         else:
-            print (f"The equations on lines {str(lineNum1)}, {str(lineNum2)} do not have the same left sides")
-            return
+            print ('\n' +f"The equations on lines {str(lineNum1)}, {str(lineNum2)} do not have the same left sides")
 
     def identleft(self, lineNum):
         """
@@ -419,18 +422,17 @@ class Proof:
                     break
                 # else we can't apply identity elimination 
             if l1==[]:
-                print ("identity can't be applied")
-                return
-            newProduct = Mult(l1)
-            ret = Eq(newProduct,evidence.RHS,evidence.group)
+                print('\n' +"Identity can't be applied")
+            else:
+                newProduct = Mult(l1)
+                ret = Eq(newProduct,evidence.RHS,evidence.group)
+                self.steps += [ret]
+                self.justifications += ["identity elimination "] 
+                self.show() 
         else: 
-            print(f"Expected an equation on line {lineNum} but received {type(evidence)}")
-            return 
+            print('\n' +f"Expected an equation on line {lineNum} but received {type(evidence)}")
 
-        self.steps += [ret]
-        self.justifications += ["identity elimination "] 
-        self.show() 
-
+        
     def identright(self, lineNum):
         """
         Identity elimination: find the first pair of element and the group identity return an element 
@@ -453,17 +455,17 @@ class Proof:
                     break
                 # else we can't apply identity elimination 
             if l1==[]:
-                print ("identity can't be applied")
-                return
-            newProduct = Mult(l1)
-            ret = Eq(evidence.LHS,newProduct,evidence.group)
+                print ('\n' + "Identity can't be applied")
+            else:
+                newProduct = Mult(l1)
+                ret = Eq(evidence.LHS,newProduct,evidence.group)
+                self.steps += [ret]
+                self.justifications += ["identity elimination "] 
+                self.show()
         else: 
-            print(f"Expected an equation on line {lineNum} but received {type(evidence)}")
-            return 
+            print('\n' + f"Expected an equation on line {lineNum} but received {type(evidence)}")
 
-        self.steps += [ret]
-        self.justifications += ["identity elimination "] 
-        self.show()
+        
 
     def introReflexive(self,eq):
         """
@@ -477,7 +479,7 @@ class Proof:
             self.justifications += ["reflexive equality"] 
             self.show()
         else:
-            print ("this is not reflexive")
+            print ('\n' + "This is not reflexive")
 
     def reduceLogic(self, lineNum):
         """
@@ -490,7 +492,7 @@ class Proof:
             self.justifications += ["logic reduction"] 
             self.show()
         else:
-            print ("this is not a logic statement")
+            print ('\n' + "This is not a logic statement")
 
     def introCases(self, case):
         """
@@ -500,7 +502,7 @@ class Proof:
         case1 = case
         case2 = reduce(Not(case))
         self.steps += [Or(case1, case2)]
-        self.justifications += ["case introduction (LEM)"] 
+        self.justifications += ["Case introduction (LEM)"] 
         self.show()
 
     def introSubproof(self, assum):
@@ -530,9 +532,10 @@ class Proof:
             self.justifications += [None]*((len(evidence.steps))-evidence.linestart-1)
             self.steps += [conc]
             self.justifications += ["Conclusion of subproof"]
+            self.show()
         else:
             print("You can only conclude a subproof right after one")
-        self.show()
+        
 
     def introElement(self,G, name):
         """
@@ -542,7 +545,7 @@ class Proof:
         :param name: the name of the new element
         """
         if G.contains(name):
-            print(f"{name} is already in {G}")
+            print('\n' + f"{name} is already in {G}")
         else:
             self.env[name] = G.newElement(name)
             self.steps += [In(name, G)]
@@ -563,15 +566,16 @@ class Proof:
             v = vars[i]
             l = elemIntroLines[i]
             if self.steps[l].elem!=vars[i]:
+                print('\n')
                 print("Line", l, "does not introduce variable", v)
-                return
-            if self.steps[l].group!=G:
+            elif self.steps[l].group!=G:
+                print('\n')
                 print("Element", v, "is not in group", G)
-                return
-        #If you make it here, this is a valid for all intro
-        self.steps+=[forall(vars,G,evidence)]
-        self.justifications+=["For all introduction"]
-        self.show()
+            else:
+                #If you make it here, this is a valid for all intro
+                self.steps+=[forall(vars,G,evidence)]
+                self.justifications+=["For all introduction"]
+                self.show()
 
     def closure(self,G,a,b):
         '''
@@ -587,9 +591,9 @@ class Proof:
             self.show()
         else:
             if not G.contains(a):
-                print(f"{a} is not in {G}")
+                print('\n'+f"{a} is not in {G}")
             else:
-                print(f"{b} is not in {G}")
+                print('\n'+f"{b} is not in {G}")
 
     def cancelRight(self, lineNum, mult):
         '''
@@ -607,9 +611,9 @@ class Proof:
                 self.justifications += [f"Right side cancellation of {mult} on line {lineNum}"]
                 self.show()
             else:
-                print(f"It seems like the right hand sides on line {lineNum} are not equal to {mult}")
+                print('\n'+f"It seems like the right hand sides on line {lineNum} are not equal to {mult}")
         else:
-            print(f"It doesn't seem like line {lineNum} contains an equation")
+            print('\n'+f"It doesn't seem like line {lineNum} contains an equation")
 
     def cancelLeft(self, lineNum, mult):
         '''
@@ -627,9 +631,9 @@ class Proof:
                 self.justifications += [f"Right side cancellation of {mult} on line {lineNum}"]
                 self.show()
             else:
-                print(f"It seems like the left hand sides on line {lineNum} are not equal to {mult}")
+                print('\n'+f"It seems like the left hand sides on line {lineNum} are not equal to {mult}")
         else:
-            print(f"It doesn't seem like line {lineNum} contains an equation")
+            print('\n'+f"It doesn't seem like line {lineNum} contains an equation")
 
     def switchSidesOfEqual(self, lineNum):
         '''
@@ -644,7 +648,7 @@ class Proof:
             self.justifications += [f"Switched sides of line {lineNum}"]
             self.show()
         else:
-            print(f"Hmm, it doesn't look like line {lineNum} isn't an equality")
+            print('\n'+f"Hmm, it doesn't look like line {lineNum} isn't an equality")
         
     def notElim(self, lineNum1, lineNum2):
         '''
@@ -659,7 +663,7 @@ class Proof:
             self.justifications += [f'Contradiction from lines {lineNum1} and {lineNum2}']
             self.show()
         else:
-            print(f"The statement on line {lineNum1} isn't a Not statement")
+            print('\n'+f"The statement on line {lineNum1} isn't a Not statement")
 
     def impliesIntroduction(self, lineNumsAssums, lineNumConc): # needs work, a lot of it
         '''
@@ -689,7 +693,7 @@ class Proof:
                 self.steps += [evidence.arg2]
                 self.justifications += ["And elimination"]
             else:
-                print("You must choose argument 1 or 2")
+                print('\n'+"You must choose argument 1 or 2")
         else:
-            print(f"The statement on line {lineNum} isn't an And statement")
+            print('\n'+f"The statement on line {lineNum} isn't an And statement")
     
