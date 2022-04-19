@@ -586,7 +586,7 @@ class Proof:
         '''
         if G.contains(a) and G.contains(b):
             G.mulElements(a,b)
-            self.steps+=[In(G,Mult([a,b]))]
+            self.steps+=[In(Mult([a,b]),G)]
             self.justifications+=["Closure"]
             self.show()
         else:
