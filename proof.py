@@ -268,13 +268,16 @@ class Proof:
         self.show()
 
     ##power methods 
-    def breakPower(self,power):
+    def breakPower(self,input):
         """
         Given an expression like e^a where a is a python integer, return a mult object equivalent to e^a
         :param power: the power to be converted to mult
-        """   
-        exp=power.exponent   
-        element = power.element 
+        """  
+        if isinstance(input,power) == False: 
+            print (f"Expected a power object but received type {type(input)}")
+            return  
+        exp=input.exponent   
+        element = input.element 
         multList=[]
         for i in range(exp):
             multList.append(element)
@@ -287,6 +290,9 @@ class Proof:
         Given a mult object with a single element, convert it to a power object (for example turning e*e*e to e^3)
         :param mult: the mult object to be converted 
         """  
+        if isinstance(mult,Mult) == False: 
+            print (f"Expected a Mult object but received type {type(mult)}")
+            return 
         multList=mult.elemList
         e=multList[0]
         for i in multList: 
@@ -298,13 +304,16 @@ class Proof:
         self.justifications += ['Convert multiplications to equivalent powers'] 
         self.show()
 
-    def splitPowerAddition(self,power):
+    def splitPowerAddition(self,input):
         """
         Simplify power objects: Given an expression e^a+b, convert to e^a*e^b. Given an expression e^a*b=(e^a)^b
         :param power: the power object with addition in exponent to be modified
         """  
-        element = self.element
-        exp=self.exponent
+        if isinstance(input, power) == False: 
+            print (f"Expected a power object but received type {type(input)}")
+            return             
+        element = input.element
+        exp=input.exponent
         l=exp.split("+")
         if len(l)==1:
             print ("No power addition to be split apart")
@@ -318,13 +327,16 @@ class Proof:
         self.show()       
              
 
-    def splitPowerMult(self,power):
+    def splitPowerMult(self,input):
         """
         Simplify power objects: Given an expression e^a*b=(e^a)^b
         :param lineNum: the power object with mult in exponent to be modified
-        """  
-        element = self.element
-        exp=self.exponent
+        """ 
+        if isinstance(input, power) == False: 
+            print (f"Expected a power object but received type {type(input)}")
+            return        
+        element = input.element
+        exp=input.exponent
         l=exp.split("*")
         if len(l)==1:
             print ("No power multiplication to be split apart")
@@ -396,6 +408,9 @@ class Proof:
                 return
             newProduct = Mult(l1)
             ret = Eq(newProduct,evidence.RHS,evidence.parentgroup)
+        else: 
+            print(f"Expected an equation on line {lineNum} but received {type(evidence)}")
+            return 
 
         self.steps += [ret]
         self.justifications += ["identity elimination "] 
@@ -427,6 +442,9 @@ class Proof:
                 return
             newProduct = Mult(l1)
             ret = Eq(evidence.LHS,newProduct,evidence.parentgroup)
+        else: 
+            print(f"Expected an equation on line {lineNum} but received {type(evidence)}")
+            return 
 
         self.steps += [ret]
         self.justifications += ["identity elimination "] 
