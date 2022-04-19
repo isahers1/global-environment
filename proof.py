@@ -4,6 +4,7 @@ from element import *
 from group import *
 from integer import *
 from logicObjects import *
+import tkinter
 
 class Proof:
     def __init__(self, label, assumption, goal=None, steps=[], justifications = [], depth=0, linestart=0): # make goal optional
@@ -16,6 +17,13 @@ class Proof:
         self.justifications = justifications
         self.env = {}
         self.subproof = None
+        if self.depth==0:
+            print('')
+            print('Proof : ' + self.label)
+            print('--------------------------------')
+        else:
+            print('Subproof : assume ' + str(self.assumption))
+            print('--------------------------------')
     
     def qed(self, lineNum):
         print(self.goal, self.steps[lineNum])
@@ -32,7 +40,7 @@ class Proof:
         self.justifications = self.justifications[:-1]
         self.show()
         
-    def show(self):
+    '''def show(self):
         if self.depth==0:
             print('')
             print('Proof : ' + self.label)
@@ -47,7 +55,11 @@ class Proof:
                 i+=len(self.steps[i].steps)-self.steps[i].linestart-1
             else:
                 print("\t"*self.depth + str(i) + ': ' + str(self.steps[i]) + '\t' + str(self.justifications[i]))
-            i+=1
+            i+=1'''
+
+    def show(self):
+        i = len(self.steps)-1
+        print("\t"*self.depth + str(i) + ': ' + str(self.steps[i]) + '\t' + str(self.justifications[i]))
 
     def introAssumption(self, expr):
         self.steps += [expr]
