@@ -102,9 +102,9 @@ class Proof:
                 self.justifications += [f'Replaced all instances of {ev2.LHS} with {ev2.RHS} on line {lineNum1}']
                 self.show()
             else:
-                print("Cannot substitute without an Equation")
+                print(f"The statement on line {lineNum2} is not an equality, substitutition is not possible")
         else:
-            print("Cannot substitute without an Equation")
+            print(f"The statement on line {lineNum1} is not an equality, substitutition is not possible")
 
     def substituteLHS(self, lineNum1, lineNum2):
         """
@@ -121,9 +121,9 @@ class Proof:
                 self.justifications += [f'Replaced all instances of {ev2.RHS} with {ev2.LHS} on line {lineNum1}']
                 self.show()
             else:
-                print("Cannot substitute without an Equation")
+                print(f"The statement on line {lineNum2} is not an equality, substitutition is not possible")
         else:
-            print("Cannot substitute without an Equation")
+            print(f"The statement on line {lineNum1} is not an equality, substitutition is not possible")
     
     def modus(self, lineNum1, lineNums): # lineNums because multiple assumptions may be neccessary (I think)
         """
@@ -131,27 +131,30 @@ class Proof:
         :param lineNum1 and lineNum2: one line in the proof where the person showed A->B and one line the proof where the person showed A
         """
         ev1 = self.steps[lineNum1]
-        ev2 = []
-        for line in lineNums:
-            ev2 += self.steps[line]
-        if isinstance(ev1, Implies): 
-            A = ev1.assum
-            B = ev1.conc
-            if A == ev2: 
-                self.steps += [B]
-                self.justifications += [f'Modus Ponens on {str(lineNum1)}, {str(lineNums)}'] 
-                self.show() 
+        if isinstance(lineNums, list):
+            ev2 = []
+            for line in lineNums:
+                ev2 += self.steps[line]
+            if isinstance(ev1, Implies): 
+                A = ev1.assum
+                B = ev1.conc
+                if A == ev2: 
+                    self.steps += [B]
+                    self.justifications += [f'Modus Ponens on {str(lineNum1)}, {str(lineNums)}'] 
+                    self.show() 
+            else:
+                print (f"Line {str(lineNum1)} is not an implies statement")
         else:
-            print (f"Line {str(lineNum1)} is not an implies statement")
+            print("The second argument should be a list, maybe you only have one assumption - make sure to put it into a singleton list")
 
     def inverseElimRHS(self,lineNum):
         """
         finds the first pair of group element and its inverse and returns the group element
         :param lineNum: the line of the proof to be modified on the right hand side
         """
-        evidence = copy.deepcopy(self.steps[lineNum]).RHS
-        if isinstance(evidence,Mult): 
-            l = evidence.products.copy()
+        evidence = copy.deepcopy(self.steps[lineNum])
+        if isinstance(evidence,Eq): 
+            l = evidence.RHS.products.copy()
             lawApplied = False
             for i in range(len(l)-1):
                 if isinstance(l[i],element) and isinstance(l[i+1],inverse) and (l[i].elementName == l[i+1].elementName):
@@ -169,18 +172,21 @@ class Proof:
             if lawApplied==False:
                 print (f"Inverse laws can't be applied on line {lineNum}")
                 return
-        self.steps += [newProducts]
-        self.justifications += [f'Right hand side inverse elimination on line {lineNum}'] 
-        self.show()
+            self.steps += [newProducts]
+            self.justifications += [f'Right hand side inverse elimination on line {lineNum}'] 
+            self.show()
+        else:
+            print(f"It doesn't seem like line {lineNum} contains an equation")
+        
     
     def inverseElimLHS(self,lineNum):
         """
         finds the first pair of group element and its inverse and returns the group element
         :param lineNum: the line of the proof to be modified on the left hand side
         """
-        evidence = copy.deepcopy(self.steps[lineNum]).LHS
-        if isinstance(evidence,Mult): 
-            l = evidence.products.copy()
+        evidence = copy.deepcopy(self.steps[lineNum])
+        if isinstance(evidence,Eq): 
+            l = evidence.LHS.products.copy()
             lawApplied = False
             for i in range(len(l)-1):
                 if isinstance(l[i],element) and isinstance(l[i+1],inverse) and (l[i].elementName == l[i+1].elementName):
@@ -198,9 +204,11 @@ class Proof:
             if lawApplied==False:
                 print (f"Inverse laws can't be applied on line {lineNum}")
                 return
-        self.steps += [newProducts]
-        self.justifications += [f'Left hand side inverse elimination on line {lineNum}'] 
-        self.show()
+            self.steps += [newProducts]
+            self.justifications += [f'Left hand side inverse elimination on line {lineNum}'] 
+            self.show()
+        else:
+            print(f"It doesn't seem like line {lineNum} contains an equation")
     
     ## For all and there exists elimination
      
@@ -235,38 +243,45 @@ class Proof:
             self.show() 
 
     ## Multiplication manipulation
-    def leftMult (self, elem, lineNum):
+    def leftMult(self, elemName, lineNum):
         """
         Left Multiply both sides of an equation with the input element 
         :param lineNum: the equation in the proof that is to be modified 
-        :param elem: the element to left Multiply with 
+        :param elemName: the name of the element to left Multiply with 
         """
         eq = copy.deepcopy(self.steps[lineNum])
-        if isinstance(eq, Eq) == False:
+        if isinstance(eq, Eq): 
+            if elemName in eq.group.elements:
+                elem = eq.group.elements[elemName]
+                product = self.MultElem(elem, eq.LHS)
+                result = Eq(product, self.MultElem(elem,eq.RHS), eq.group)
+                self.steps += [result]
+                self.justifications += ['Left multiply line {lineNum} by ' +str(elem) ] 
+                self.show()
+            else:
+                print("The element " + elemName + " is not in the group " + eq.group)
+        else:
             print (f"Line {lineNum} is not an equation")
-            return
-        product = self.MultElem(elem, eq.LHS)
-        result = Eq(product, self.MultElem(elem,eq.RHS), eq.group)
-        self.steps += [result]
-        self.justifications += ['Left multiply line {lineNum} by ' +str(elem) ] 
-        self.show()
 
-    def rightMult (self, elem, lineNum):
+    def rightMult (self, elemName, lineNum):
         """
         Right Multiply both sides of an equation with the input element 
         :param lineNum: the line in the proof that is to be modified 
-        :param elem: the element to right Multiply 
+        :param elemName: the name of the element to right Multiply with
         """
         eq = copy.deepcopy(self.steps[lineNum])
-        if isinstance(eq, Eq) == False:
+        if isinstance(eq, Eq):
+            if elemName in eq.group.elements:
+                elem = eq.group.elements[elemName]
+                product = self.MultElem(eq.LHS, elem)
+                result = Eq(product, self.MultElem(eq.RHS, elem), eq.group)
+                self.steps += [result]
+                self.justifications += ['Right multiply line {lineNum} by ' +str(elem) ] 
+                self.show()
+            else:
+                print("The element " + elemName + " is not in the group " + eq.group)
+        else:
             print (f"Line {lineNum} is not an equation")
-            return
-        product = self.MultElem(eq.LHS, elem)
-        result = Eq(product, self.MultElem(eq.RHS,elem), eq.group)
-        self.steps += [result]
-        self.justifications += [f'Right multiply line {lineNum} by ' +str(elem)] 
-        self.show()
-
     ##power methods 
     def breakPower(self,input):
         """

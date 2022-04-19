@@ -123,9 +123,9 @@ class Eq:
         return str(self.LHS) + ' = ' + str(self.RHS)
 
     def __eq__(self,other):
-        if self.LHS == other.LHS and self.RHS == other.RHS:
+        if self.LHS == other.LHS and self.RHS == other.RHS and self.group == other.group:
             return True 
-        elif self.LHS == other.RHS and self.RHS == other.LHS: # a=b is the same as b=a
+        elif self.LHS == other.RHS and self.RHS == other.LHS and self.group == other.group: # a=b is the same as b=a
             return True 
         else: 
             return False
@@ -211,7 +211,7 @@ class thereexists:
         else:
             print("Replacements is not the same length as the list of existential elements")
 
-## Unique class
+## Unique class - idk if we need this
 
 class uniqueElementProperty:
     def __init__ (self, prpty, pg):
@@ -239,3 +239,5 @@ class inverse(element):
         rhs = Mult([pg.identity_identifier])
         inverseEq = Eq(lhs,rhs,pg)
         pg.addGroupProperty(inverseEq, "Inverse of " + elementName)
+
+## TO DO: class generator(element):
