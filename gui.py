@@ -1,18 +1,13 @@
 from tkinter import *
 from tkinter import ttk
 from proof import *
-import sys
-import io
 
 def enter(*args):
-    try:
-        input = entry.get()
-        exec(input)
-        showing.set(buffer.getvalue())
-    except:
-        showing.set("ERROR")
-
-sys.stdout = buffer = io.StringIO()
+    input = entry.get()
+    input = "p."+input
+    print(input)
+    exec(input)
+    showing.set(p.show())
 
 G = group('G','*')
 abelianG = forall(['x', 'y'], G, Eq(Mult(['x', 'y']), Mult(['y','x']),G))
@@ -31,12 +26,11 @@ entry_bar = ttk.Entry(mainframe, width=50, textvariable=entry)
 entry_bar.grid(column=1, row=3, sticky=(W, E))
 
 showing = StringVar()
+showing.set("Proof : Simple Abelian Proof\n--------------------------------")
 
-ttk.Label(mainframe, textvariable=showing).grid(column=1, row=2, sticky=(W, E))
+showProof = ttk.Label(mainframe, background="white", textvariable=showing).grid(column=1, row=2, sticky=(W, E))
 
 ttk.Button(mainframe, text="Enter", command=enter).grid(column=3, row=3, sticky=W)
-
-ttk.Label(mainframe, text="Proof:").grid(column=1, row=1, sticky=W)
 
 for child in mainframe.winfo_children(): 
     child.grid_configure(padx=5, pady=5)

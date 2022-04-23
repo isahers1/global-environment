@@ -4,7 +4,9 @@ from element import *
 from group import *
 from integer import *
 from logicObjects import *
-import tkinter
+from tkinter import *
+from tkinter import ttk
+from tkinter import messagebox
 
 class Proof:
     def __init__(self, label, assumption, goal=None, steps=[], justifications = [], depth=0, linestart=0): # make goal optional
@@ -17,50 +19,40 @@ class Proof:
         self.justifications = justifications
         self.env = {}
         self.subproof = None
-        if self.depth==0:
-            print('')
-            print('Proof : ' + self.label)
-            print('--------------------------------')
-        else:
-            print('Subproof : assume ' + str(self.assumption))
-            print('--------------------------------')
     
     def qed(self, lineNum):
-        print(self.goal, self.steps[lineNum])
+        self.throwError(self.goal, self.steps[lineNum])
 
         if self.goal == self.steps[lineNum]:
             self.steps+=["□"]
             self.justifications += ["QED"]
             self.show()
         else:
-            print("This is not the same as the goal")
+            self.throwError("This is not the same as the goal")
 
     def undo(self):
         self.steps = self.steps[:-1]
         self.justifications = self.justifications[:-1]
         self.show()
         
-    '''def show(self):
+    def show(self):
+        lines=[]
         if self.depth==0:
-            print('')
-            print('Proof : ' + self.label)
-            print('--------------------------------')
+            lines.append('Proof : ' + self.label)
+            lines.append('--------------------------------')
         else:
-            print('Subproof : assume ' + str(self.assumption))
-            print('--------------------------------')
+            lines.append('Subproof : assume ' + str(self.assumption))
+            lines.append('--------------------------------')
         i = self.linestart
         while i < len(self.steps):
             if isinstance(self.steps[i],Proof):
                 self.steps[i].show()
                 i+=len(self.steps[i].steps)-self.steps[i].linestart-1
             else:
-                print("\t"*self.depth + str(i) + ': ' + str(self.steps[i]) + '\t' + str(self.justifications[i]))
-            i+=1'''
-
-    def show(self):
-        i = len(self.steps)-1
-        print("\t"*self.depth + str(i) + ': ' + str(self.steps[i]) + '\t' + str(self.justifications[i]))
-
+                lines.append("\t"*self.depth + str(i) + ': ' + str(self.steps[i]) + '\t' + str(self.justifications[i]))
+            i+=1
+        return "\n".join(lines)
+        
     def introAssumption(self, expr):
         self.steps += [expr]
         self.justifications += ['introAssumption'] 
@@ -114,9 +106,9 @@ class Proof:
                 self.justifications += [f'Replaced all instances of {ev2.LHS} with {ev2.RHS} on line {lineNum1}']
                 self.show()
             else:
-                print("Cannot substitute without an Equation")
+                self.throwError("Cannot substitute without an Equation")
         else:
-            print("Cannot substitute without an Equation")
+            self.throwError("Cannot substitute without an Equation")
 
     def substituteLHS(self, lineNum1, lineNum2):
         """
@@ -133,9 +125,9 @@ class Proof:
                 self.justifications += [f'Replaced all instances of {ev2.RHS} with {ev2.LHS} on line {lineNum1}']
                 self.show()
             else:
-                print("Cannot substitute without an Equation")
+                self.throwError("Cannot substitute without an Equation")
         else:
-            print("Cannot substitute without an Equation")
+            self.throwError("Cannot substitute without an Equation")
     
     def modus(self, lineNum1, lineNums): # lineNums because multiple assumptions may be neccessary (I think)
         """
@@ -224,7 +216,7 @@ class Proof:
         """
         evidence = copy.deepcopy(self.steps[lineNum])
         if isinstance(evidence, forall) == False:
-            print(f"There is no forall statmenent on line {lineNum}")
+            self.throwError(f"There is no forall statmenent on line {lineNum}")
         else:
             expr = evidence.replace(replacements)
             self.steps += [expr]
@@ -239,7 +231,7 @@ class Proof:
         """
         evidence = copy.deepcopy(self.steps[lineNum])
         if isinstance(evidence, thereexists) == False:
-            print(f"There is no there exists statmenent on line {lineNum}")
+            self.throwError(f"There is no there exists statmenent on line {lineNum}")
         else:
             expr = evidence.replace(replacements)
             self.steps += [expr]
@@ -510,8 +502,11 @@ class Proof:
             self.steps += [conc]
             self.justifications += ["Conclusion of subproof"]
         else:
-            print("You can only conclude a subproof right after one")
+            self.throwError("You can only conclude a subproof right after one")
         self.show()
+
+    def throwError(self,description,header="Error"):
+        messagebox.showinfo(title=header, message=description)
 
     def introElement(self,G, name):
         """
@@ -521,7 +516,7 @@ class Proof:
         :param name: the name of the new element
         """
         if G.contains(name):
-            print(f"{name} is already in {G}")
+            self.throwError(f"{name} is already in {G}")
         else:
             self.env[name] = G.newElement(name)
             self.steps += [In(name, G)]
@@ -542,10 +537,10 @@ class Proof:
             v = vars[i]
             l = elemIntroLines[i]
             if self.steps[l].elem!=vars[i]:
-                print("Line", l, "does not introduce variable", v)
+                self.throwError(f"Line {l} does not introduce variable {v}")
                 return
             if self.steps[l].grp!=G:
-                print("Element", v, "is not in group", G)
+                self.throwError(f"Element {v} is not in group {G}")
                 return
         #If you make it here, this is a valid for all intro
         self.steps+=[forall(vars,G,self.steps[equationLine])]
@@ -566,9 +561,9 @@ class Proof:
             self.show()
         else:
             if not G.contains(a):
-                print(f"{a} is not in {G}")
+                self.throwError(f"{a} is not in {G}")
             else:
-                print(f"{b} is not in {G}")
+                self.throwError(f"{b} is not in {G}")
 
     def cancelRight(self, lineNum, mult):
         '''
@@ -586,9 +581,9 @@ class Proof:
                 self.justifications += [f"Right side cancellation of {mult} on line {lineNum}"]
                 self.show()
             else:
-                print(f"It seems like the right hand sides on line {lineNum} are equal to {mult}")
+                self.throwError(f"It seems like the right hand sides on line {lineNum} are equal to {mult}")
         else:
-            print(f"It doesn't seem like line {lineNum} contains an equation")
+            self.throwError(f"It doesn't seem like line {lineNum} contains an equation")
 
     def cancelLeft(self, lineNum, mult):
         '''
@@ -606,9 +601,9 @@ class Proof:
                 self.justifications += [f"Right side cancellation of {mult} on line {lineNum}"]
                 self.show()
             else:
-                print(f"It seems like the left hand sides on line {lineNum} are equal to {mult}")
+                self.throwError(f"It seems like the left hand sides on line {lineNum} are equal to {mult}")
         else:
-            print(f"It doesn't seem like line {lineNum} contains an equation")
+            self.throwError(f"It doesn't seem like line {lineNum} contains an equation")
 
     def switchSidesOfEqual(self, lineNum):
         '''
@@ -623,7 +618,7 @@ class Proof:
             self.justifications += [f"Switched sides of line {lineNum}"]
             self.show()
         else:
-            print(f"Hmm, it doesn't look like line {lineNum} isn't an equality")
+            self.throwError(f"Hmm, it doesn't look like line {lineNum} isn't an equality")
         
     def notElim(self, lineNum1, lineNum2):
         '''
@@ -638,7 +633,7 @@ class Proof:
             self.justifications += [f'Contradiction from lines {lineNum1} and {lineNum2}']
             self.show()
         else:
-            print(f"The statement on line {lineNum1} isn't a Not")
+            self.throwError(f"The statement on line {lineNum1} isn't a Not")
 
     def impliesIntroduction(self, lineNumsAssums, lineNumConc): # needs work, a lot of it
         '''
@@ -668,7 +663,7 @@ class Proof:
                 self.steps += [evidence.arg2]
                 self.justifications += ["And elimination"]
             else:
-                print("You must choose argument 1 or 2")
+                self.throwError("You must choose argument 1 or 2")
         else:
-            print("The provided line is not an and statement")
+            self.throwError("The provided line is not an and statement")
     
