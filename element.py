@@ -1,12 +1,3 @@
-"""
-QUESTIONS:
-
-1. How do we deal with element properties that apply to the whole group? Should this be a group property, element property, or both?
-2. Break apart elements that are multiplied together?
-3. Way to do induction?
-"""
-
-
 class element:
     elementName = ""
     parentGroups = []

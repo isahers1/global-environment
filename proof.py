@@ -1,12 +1,9 @@
-from re import L
-
 from element import *
 from group import *
 from integer import *
 from logicObjects import *
-from tkinter import *
-from tkinter import ttk
 from tkinter import messagebox
+import copy
 
 class Proof:
     def __init__(self, label, assumption, goal=None, steps=[], justifications = [], depth=0, linestart=0): # make goal optional

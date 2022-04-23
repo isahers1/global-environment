@@ -1,5 +1,3 @@
-# INTEGER CLASS, needs to be implemented
-
 class integer:
     def __init__(self, input):
         if isinstance(input, str):

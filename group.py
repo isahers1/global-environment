@@ -1,4 +1,3 @@
-exec(compile(source=open('element.py').read(), filename='element.py', mode='exec'))
 from logicObjects import identity, Mult
 
 
