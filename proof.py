@@ -5,6 +5,8 @@ from logicObjects import *
 from tkinter import messagebox
 import copy
 
+from pylatex import Document, Section, Subsection, Command, Enumerate
+from pylatex.utils import italic, NoEscape
 class Proof:
     def __init__(self, label, assumption, goal=None, steps=[], justifications = [], depth=0, linestart=0): # make goal optional
         self.linestart = linestart
@@ -18,14 +20,27 @@ class Proof:
         self.subproof = None
     
     def qed(self, lineNum):
-        self.throwError(self.goal, self.steps[lineNum])
-
         if self.goal == self.steps[lineNum]:
-            self.steps+=["□"]
+            self.steps+=["QED"]
             self.justifications += ["QED"]
             self.show()
         else:
             self.throwError("This is not the same as the goal")
+
+    def writeLaTeXfile(self):
+        doc = Document('basic')
+        doc.preamble.append(Command('title', self.label))
+        doc.append(NoEscape(r'\maketitle'))
+        doc.append(italic("Proof:"))
+        with doc.create(Enumerate()) as enum:
+            doc.append(NoEscape(r"\addtocounter{enumi}{-1}"))
+            for i in range(len(self.steps)):
+                if isinstance(self.steps[i],str):
+                    enum.add_item(NoEscape(self.steps[i]+r"\hfill"))
+                else:
+                    enum.add_item(NoEscape("$"+self.steps[i].toLaTeX()+r"$\hfill"))
+                enum.append(" by " + str(self.justifications[i]))
+        doc.generate_pdf(self.label)
 
     def undo(self):
         self.steps = self.steps[:-1]

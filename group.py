@@ -1,5 +1,5 @@
 from logicObjects import identity, Mult
-
+from element import element
 
 class group:
     # TRUTHS for all classes - need to add more here
@@ -20,7 +20,7 @@ class group:
     # basic functions
 
     def __repr__(self):
-        return "group(" + self.groupName + ")"
+        return self.groupName
     def __eq__(self,other):
         return self.groupName == other.groupName
     def __mul__(self,other): # group cartesian product. Worry about this later
@@ -64,3 +64,6 @@ class group:
 
     def contains(self, elementName):
         return elementName in self.elements
+
+    def toLaTeX(self):
+        return self.groupName

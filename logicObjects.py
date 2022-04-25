@@ -22,6 +22,8 @@ class Mult:
             return Mult(self.products+other.products) #Mult *
         else:
             return Mult(self.products+[other]) #Mult with element
+    def toLaTeX(self):
+        return "".join(self.elemList)
 
     def replace(self, var, expr):
         new_products = []
@@ -56,6 +58,9 @@ class And:
     def __repr__(self):
         return "("+ str(self.arg1)+" and "+str(self.arg2)+ ")"
 
+    def toLaTeX(self):
+        return self.arg1.toLaTeX() + r" and " + self.arg2.toLaTeX()
+
 class Or:
     def __init__(self, arg1, arg2):
         self.arg1 = arg1
@@ -67,6 +72,10 @@ class Or:
         check2 = isinstance(implies2, Implies) and implies2.assum==self.arg2
         if check1 and check2 and implies1.conc==implies2.conc:
             return implies1.conc
+
+    def toLaTeX(self):
+        return self.arg1.toLaTeX() + r" or " + self.arg2.toLaTeX()
+
 
 class Implies: # expand a little more functionality
     def __init__(self, assum, conc):
@@ -85,6 +94,10 @@ class Implies: # expand a little more functionality
     def __repr__(self):
         return  str(self.assum) + " → " +  str(self.conc)
 
+    def toLaTeX(self):
+        return self.arg1.toLaTeX() + r" \implies " + self.arg2.toLaTeX()
+
+
 class Not:
     def __init__(self, arg):
         self.arg = arg
@@ -96,12 +109,18 @@ class Not:
     def __repr__(self):
         return "Not " + str(self.arg)
 
+    def toLaTeX(self):
+        return r"\lnot " + self.arg.toLaTeX()
+
 class Bottom:
     def elim(self, conclusion):
         return conclusion
     
     def __repr__(self):
         return "⊥"
+
+    def toLaTeX(self):
+        return r"\bot"
 
 class In:
     def __init__(self, elem, grp):
@@ -110,6 +129,9 @@ class In:
 
     def __repr__(self):
         return str(self.elem) + " ∈ " + str(self.grp)
+
+    def toLaTeX(self):
+        return str(self.elem) + r" \in " + str(self.grp)
 
 class Eq:
     def __init__(self,LHS,RHS,pg):
@@ -130,6 +152,9 @@ class Eq:
 
     def replace(self, var, expr):
         return Eq(self.LHS.replace(var,expr), self.RHS.replace(var,expr), self.parentgroup)
+
+    def toLaTeX(self):
+        return str(self.LHS) + r" = " + str(self.RHS)
 
 def reduce(exp):
     if isinstance(exp, Eq):
@@ -170,6 +195,9 @@ class forall:
         else:
             return False
 
+    def toLaTeX(self):
+        return r"\forall " + ",".join(self.arbelems) + r" \in " + str(self.group) + r"\ " + self.eq.toLaTeX()
+
 
     def replace(self, replacements): # replacements = ['x','y'] - strings of the elements
         if len(replacements) == len(self.arbelems):
@@ -208,6 +236,10 @@ class thereexists:
                 print(f"Replacements contains elements that are not in {self.group}")
         else:
             print("Replacements is not the same length as the list of existential elements")
+
+    def toLaTeX(self):
+        return r"\exists " + ",".join(self.existelems) + r" \in " + str(self.group)  + r"\ " + self.toLaTeX(self.eq)
+
 
 ## Unique class
 
