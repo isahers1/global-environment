@@ -65,3 +65,6 @@ class group:
 
     def contains(self, elementName):
         return elementName in self.elements
+    
+    def toLaTeX(self):
+        return self.groupName
