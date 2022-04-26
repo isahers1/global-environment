@@ -1,6 +1,7 @@
 from tkinter import PhotoImage
 from tkinter import *
 from tkinter import ttk
+from turtle import undo
 from proof import *
 from tkinter.scrolledtext import ScrolledText
 import fitz
@@ -122,6 +123,9 @@ entry_bar.bind('<KeyRelease>', get_typed)
 entry_bar.bind('<Key>', detect_pressed)
 entry_bar.bind('<BackSpace>', check_empty)
 
+def undo(*args):
+    p.undo()
+    showing.set(p.showReturn())
 
 
 #entry_bar = AutocompleteCombobox(mainframe, width=50, textvariable=entry, completevalues = proof_methods)
@@ -133,6 +137,8 @@ showing.set("Proof : Simple Abelian Proof\n--------------------------------")
 showProof = ttk.Label(mainframe, background="white", textvariable=showing).grid(column=1, row=2, sticky=(W, E))
 
 ttk.Button(mainframe, text="Enter", command=enter).grid(column=3, row=3, sticky=W)
+
+ttk.Button(mainframe, text="Undo", command=undo).grid(column=3, row=2, sticky=W)
 
 ttk.Button(mainframe, text="Generate Latex", command=generateLaTeX).grid(column=3, row=4, sticky=W)
 
