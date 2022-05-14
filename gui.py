@@ -3,23 +3,6 @@ from tkinter import *
 from tkinter import ttk
 from proof import *
 from tkinter.scrolledtext import ScrolledText
-import fitz
-
-class PDFViewer(ScrolledText):
-    def show(self, pdf_file):
-        self.delete('1.0', 'end') # clear current content
-        pdf = fitz.open(pdf_file) # open the PDF file
-        self.images = []   # for storing the page images
-        for page in pdf:
-            pix = page.get_pixmap()
-            pix1 = fitz.Pixmap(pix, 0) if pix.alpha else pix
-            photo = PhotoImage(data=pix1.tobytes('ppm'))
-            # insert into the text box
-            self.image_create('end', image=photo)
-            self.insert('end', '\n')
-            # save the image to avoid garbage collected
-            self.images.append(photo)
-
 
 def enter(*args):
     input = entry.get()
@@ -44,10 +27,6 @@ mainframe.grid(column=0, row=0, sticky=(N, W, E, S))
 root.columnconfigure(0, weight=1)
 root.rowconfigure(0, weight=1)
 
-pdf1 = PDFViewer(mainframe, width=80, height=30, spacing3=5, bg='blue')
-pdf1.grid(row=5, column=1, sticky='nsew')
-pdf1.show('Simple Abelian Proof.pdf')
-
 entry = StringVar()
 entry_bar = ttk.Entry(mainframe, width=50, textvariable=entry)
 entry_bar.grid(column=1, row=3, sticky=(W, E))
@@ -60,6 +39,40 @@ showProof = ttk.Label(mainframe, background="white", textvariable=showing).grid(
 ttk.Button(mainframe, text="Enter", command=enter).grid(column=3, row=3, sticky=W)
 
 ttk.Button(mainframe, text="Generate Latex", command=generateLaTeX).grid(column=3, row=4, sticky=W)
+
+def new():
+    return
+
+def open():
+    return
+
+def save():
+    return
+
+def exit():
+    return
+
+menubar = Menu(root)
+filemenu = Menu(menubar, tearoff=0)
+filemenu.add_command(label="New", command=new)
+filemenu.add_command(label="Open", command=open)
+filemenu.add_command(label="Save", command=save)
+filemenu.add_separator()
+filemenu.add_command(label="Exit", command=root.quit)
+menubar.add_cascade(label="File", menu=filemenu)
+
+def commandList():
+    return
+
+def about():
+    return
+
+helpmenu = Menu(menubar, tearoff=0)
+helpmenu.add_command(label="Command List", command=commandList)
+helpmenu.add_command(label="About", command=about)
+menubar.add_cascade(label="Help", menu=helpmenu)
+
+root.config(menu=menubar)
 
 for child in mainframe.winfo_children(): 
     child.grid_configure(padx=5, pady=5)
