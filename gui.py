@@ -1,10 +1,18 @@
 from tkinter import PhotoImage
 from tkinter import *
 from tkinter import ttk
+from regex import P
+
+from sympy import GoldenRatio
 from proof import *
 from tkinter.scrolledtext import ScrolledText
 
+G = ''
+p = ''
+
 def enter(*args):
+    global p
+    global G
     input = entry.get()
     input = "p."+input
     print(input)
@@ -13,11 +21,10 @@ def enter(*args):
 
 def generateLaTeX(*args):
     p.writeLaTeXfile()
-    pdf1.show('Simple Abelian Proof.pdf')
 
-G = group('G','*')
-abelianG = forall(['x', 'y'], G, Eq(Mult(['x', 'y']), Mult(['y','x']),G))
-p = Proof('Simple Abelian Proof', forall(['x'], G, Eq(Mult(['x', 'x']), G.elements['e'],G)), goal=abelianG)
+#G = group('G','*')
+#abelianG = forall(['x', 'y'], G, Eq(Mult(['x', 'y']), Mult(['y','x']),G))
+#p = Proof('Simple Abelian Proof', forall(['x'], G, Eq(Mult(['x', 'x']), G.elements['e'],G)), goal=abelianG)
 
 root = Tk()
 root.title("Proof-Check")
@@ -32,7 +39,6 @@ entry_bar = ttk.Entry(mainframe, width=50, textvariable=entry)
 entry_bar.grid(column=1, row=3, sticky=(W, E))
 
 showing = StringVar()
-showing.set("Proof : Simple Abelian Proof\n--------------------------------")
 
 showProof = ttk.Label(mainframe, background="white", textvariable=showing).grid(column=1, row=2, sticky=(W, E))
 
@@ -40,16 +46,48 @@ ttk.Button(mainframe, text="Enter", command=enter).grid(column=3, row=3, sticky=
 
 ttk.Button(mainframe, text="Generate Latex", command=generateLaTeX).grid(column=3, row=4, sticky=W)
 
+goal = StringVar()
+name = StringVar()
+assum = StringVar()
+
+
 def new():
-    return
+    newProof = Toplevel(root)
+    newProof.title = "New Proof"
+    Label(newProof,
+          text ="Proof Name:").pack()
+    ttk.Entry(newProof, width=50, textvariable=name).pack()
+
+    Label(newProof,
+          text ="Assumptions:").pack()
+    ttk.Entry(newProof, width=50, textvariable=assum).pack()
+
+    Label(newProof,
+          text ="Goal:").pack()
+    ttk.Entry(newProof, width=50, textvariable=goal).pack()
+
+    #p = Proof('Simple Abelian Proof', forall(['x'], G, Eq(Mult(['x', 'x']), G.elements['e'],G)), goal=abelianG)
+
+    Button(newProof,text = "Create Proof", command=lambda: createProof(newProof)).pack()
+
+
+def createProof(window):
+    global G
+    global p
+    G = group('G','*')
+    p=''
+    line = f"global p; p = Proof('{name.get()}',{assum.get()},goal={goal.get()})"
+    try:
+        exec(line)
+        showing.set(p.show())
+        window.destroy()
+    except:
+        messagebox.showinfo(title="Error", message="Invalid Entry")
 
 def open():
     return
 
 def save():
-    return
-
-def exit():
     return
 
 menubar = Menu(root)
