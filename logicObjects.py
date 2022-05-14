@@ -132,7 +132,7 @@ class In:
         return str(self.elem) + " ∈ " + str(self.group)
     
     def toLaTeX(self):
-        return str(self.elem) + r" \in " + str(self.grp)
+        return str(self.elem) + r" \in " + str(self.group)
 
 class Eq:
     def __init__(self,LHS,RHS,pg):

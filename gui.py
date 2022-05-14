@@ -1,6 +1,6 @@
 from tkinter import PhotoImage
-from tkinter import *
 from tkinter import ttk
+from tkinter import *
 from turtle import undo
 from proof import *
 from tkinter.scrolledtext import ScrolledText
