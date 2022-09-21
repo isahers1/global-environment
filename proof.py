@@ -36,7 +36,7 @@ class Proof:
         self.show()
     
     def writeLaTeXfile(self):
-        doc = Document('basic')
+        doc = Document(page_numbers=False)
         doc.preamble.append(Command('title', self.label))
         doc.append(NoEscape(r'\maketitle'))
         doc.append(italic("Proof:"))
@@ -48,6 +48,7 @@ class Proof:
                 else:
                     enum.add_item(NoEscape("$"+self.steps[i].toLaTeX()+r"$\hfill"))
                 enum.append(" by " + str(self.justifications[i]))
+        doc.generate_tex(self.label)
         doc.generate_pdf(self.label)
 
     def showReturn(self):
