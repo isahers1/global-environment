@@ -8,6 +8,7 @@ class group:
     elements = {}
     groupProperties = {} 
     elementProperties = {}
+    subGroups = []
     binaryOperator = ""
     groupName = ""
 
@@ -50,6 +51,10 @@ class group:
                 self.elements.update({repr(result):result}) # is this the right?
             except:
                 print("Sorry, one or both of these elements are not in the group!")
+    
+    def subGroup(self, property):
+        self.subGroups.append(property)
+        return f'{property} is a subgroup of {self}'
 
     def addGroupProperty(self, property, propertyName):
         self.groupProperties[propertyName] = property
