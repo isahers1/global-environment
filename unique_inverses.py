@@ -5,7 +5,7 @@ from group import *
 from integer import *
 from logicObjects import *
 
-'''
+
 G = group('G','*')
 inversePropertyOne = Eq( Mult(['a','c']) , Mult([G.identity_identifier]) , G)
 inversePropertyTwo = Eq( Mult(['a','d']) , Mult([G.identity_identifier]) , G)
@@ -24,5 +24,4 @@ p2.cancelLeft(7, ['a'])
 p2.switchSidesOfEqual(8)
 p.concludeSubproof(9)
 p.qed(10)
-'''
-print(dir(Proof))
+

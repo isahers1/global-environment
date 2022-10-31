@@ -34,6 +34,7 @@ class element:
         elif binOp in self.elementName and ')' != self.elementName[-1]:
             return "(" + self.elementName + ")" + binOp + other.elementName
         else:
+            
             return self.elementName + binOp + other.elementName
 
     def addToGroup(self, group):

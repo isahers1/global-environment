@@ -7,13 +7,13 @@ from logicObjects import *
 
 G = group('G','*')
 abelianG = forall(['x', 'y'], G, Eq(Mult(['x', 'y']), Mult(['y','x']),G))
-p = Proof('Simple Abelian Proof', forall(['x'], G, Eq(Mult(['x', 'x']), G.elements['e'],G)), goal=abelianG)
+p = Proof('Simple Abelian Proof', forall(['x'], G, Eq(Mult(['x', 'x']), Mult([G.elements['e']]),G)), goal=abelianG)
 p.introGroup(G)
 p.introElement(G,'a')
 p.introElement(G,'b')
 p.closure(G,'a','b')
-p.accessAssumption()
-p.forallElim(4,['a * b'])
+p.accessAssumption() # this and below one
+p.forallElim(4,['a * b']) # combine two steps
 p.leftMult('a',5)
 p.forallElim(4,['a'])
 p.substituteRHS(6,7)
