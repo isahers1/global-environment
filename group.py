@@ -1,5 +1,5 @@
 exec(compile(source=open('element.py').read(), filename='element.py', mode='exec'))
-from logicObjects import identity, Mult
+from logicObjects import identity, Mult, inverse
 
 
 class group:
@@ -31,6 +31,12 @@ class group:
         return group(newName, [self.binaryOperator,other.binaryOperator], newProperties)
 
     # group functions
+    def newInverse(self, elementName):
+        if elementName in self.elements:
+            inverseName =  '(' + elementName + ')^(-1)'
+            self.elements.update({inverseName:inverse(elementName,self)})
+        else:
+            print("Sorry, you cannot add the inverse of an element that does not exist!")
 
     # declare new element in group with elementName
     def newElement(self,elementName):
