@@ -31,7 +31,10 @@ class Mult:
         #print(self.products,var.products,expr.products)
         while i < len(self.products):
                 if self.products[i:i+len(var.products)] == var.products:
-                    new_products += expr.products
+                    if isinstance(expr,Mult):
+                        new_products += expr.products
+                    else:
+                        new_products.append(expr)
                     i+=len(var.products)
                 else:
                     new_products.append(self.products[i])
@@ -253,6 +256,11 @@ class uniqueElementProperty:
 
 ## Special types of elements/groups
 
+# class element_(element):
+#     def __init__(self, pg, elementName):
+#         elementName = elementName
+#         super().__init__(elementName, pg)
+
 class identity(element):
     def __init__(self, pg):
         elementName = pg.identity_identifier
@@ -264,12 +272,24 @@ class identity(element):
         pg.addElementProperty(idnty,elementName)
 
 class inverse(element):
-    def __init__(self, elementName, pg):
-        inverseName = '(' + elementName + ")^(-1)"
+    def __init__(self, object, pg):
+        if type(object) == str:
+            elementName = object
+            inverseName = elementName + "^(-1)"
+            # lhs = Mult([inverseName,pg.elements[object]])
+        else:
+            elementName = repr(object)
+            inverseName = "(" + elementName + ")" + "^(-1)"
+            # lhs = Mult([inverseName]+object.products)
         super().__init__(inverseName, pg)
-        lhs = Mult([inverseName,elementName]) # self or elementName?
-        rhs = Mult([pg.identity_identifier])
-        inverseEq = Eq(lhs,rhs,pg)
-        pg.addGroupProperty(inverseEq, "Inverse of " + elementName)
+        self.inverseName = inverseName
+        self.elementName = elementName
+    def __repr__(self):
+        return self.inverseName
+         # self or elementName?
+        # rhs = Mult([pg.identity_identifier])
+        # inverseEq = Eq(lhs,rhs,pg)
+        # pg.addGroupProperty(inverseEq, "Inverse of " + elementName)
+
 
 ## TO DO: class generator(element):
