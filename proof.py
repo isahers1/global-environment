@@ -115,7 +115,7 @@ class Proof:
             self.env['setProperty'] = {setName:[grp,property]}
             self.env['setElements'] = {setName:[]}
             self.steps += [f'{setName} with property {property}']
-            self.justifications += [f'Introduced set {setName} in group {grp}']
+            self.justifications += [f'Introduced set {setName} in {grp}']
             self.show()
         else:
             if setName in self.env['sets']:
@@ -125,8 +125,38 @@ class Proof:
                 self.env['setProperty'][setName] = [grp,property]
                 self.env['setElements'][setName] = []
                 self.steps += [setName]
-                self.justifications += [f'Introduced set {setName} in group {grp}']
+                self.justifications += [f'Introduced set {setName} in {grp}']
                 self.show()
+    
+    def addElemToSet(self, setName, elementName, grp):
+        """"
+        Given a set, and a grp it belongs to, introduce element from that group into the set
+        :param setName: name of set to take add element to
+        :param elementName: name of the element
+        :param grp: grp that contains the element
+        """
+        if 'sets' in self.env:
+            if setName in self.env['sets']:
+                if elementName not in self.env['setElements'][setName]:
+                    if grp.contains(elementName):
+                        if isinstance(self.env['setProperty'][setName][1],In):
+                            if self.env['setProperty'][setName][0] == grp:
+                                elemDeclaration = In(elementName, grp)
+                                self.env['setElements'][setName].append(elementName)
+                                self.steps += [elemDeclaration]
+                                self.justifications += [f'Added element {elementName} to set {setName}']
+                                self.show()
+                            else:
+                                messagebox.showerror('Proof Error', f'Set {setName} is in a different group than {grp}')
+                    else:
+                        messagebox.showerror('Proof Error', f"{elementName} is not in {grp}")
+                else:
+                    messagebox.showerror("You have already defined an element in this set with that name, maybe try another name?")
+            else:
+                messagebox.showerror("You haven't defined a set with that name yet!")
+        else:
+            messagebox.showerror("You haven't defined any sets yet!")
+
 
     def getArbElem(self, setName, elementName):
         """"
@@ -141,12 +171,39 @@ class Proof:
                     if not pg.contains(elementName):
                         self.env[elementName] = pg.newElement(elementName)
                         self.env['setElements'][setName].append(elementName)
-                        elemDeclaration = Eq(elementName,self.env['setProperty'][setName][1].RHS,pg)
+                        if isinstance(self.env['setProperty'][setName][1],In):
+                            elemDeclaration = In(elementName, pg)
+                        elif isinstance(self.env['setProperty'][setName][1],Eq):
+                            elemDeclaration = Eq(elementName,self.env['setProperty'][setName][1].RHS,pg)
                         self.steps += [elemDeclaration]
                         self.justifications += [f'Introduced arbitrary element {elementName} in set {setName}']
                         self.show()
                     else:
                         messagebox.showerror('Proof Error', f"{elementName} is already in {pg}")
+                else:
+                    messagebox.showerror("You have already defined an element in this set with that name, maybe try another name?")
+            else:
+                messagebox.showerror("You haven't defined a set with that name yet!")
+        else:
+            messagebox.showerror("You haven't defined any sets yet!")
+    
+    def getSpecificElem(self, setName, elementName):
+        """"
+        Given a set, select an specific element and put it on it's own line
+        :param setName: name of set to take element from
+        :param elementName: name of the specific element
+        """
+        if 'sets' in self.env:
+            if setName in self.env['sets']:
+                if elementName not in self.env['setElements'][setName]:
+                    pg = self.env['setProperty'][setName][0]
+                    if pg.contains(elementName):
+                        self.env['setElements'][setName].append(elementName)
+                        self.steps += [Eq(elementName,pg.elements[elementName],pg)]
+                        self.justifications += [f'Introduced element {elementName} in set {setName}']
+                        self.show()
+                    else:
+                        messagebox.showerror('Proof Error', f"{elementName} is not in {pg}")
                 else:
                     messagebox.showerror("You have already defined an element in this set with that name, maybe try another name?")
             else:
@@ -185,17 +242,28 @@ class Proof:
         ev = self.steps[closure]
         if setName in self.env['sets']:
             if len(arbIntros) == 2:
+                arb1 = self.steps[arbIntros[0]]
+                arb2 = self.steps[arbIntros[1]]
                 if isinstance(ev, Eq):
-                    arb1 = self.steps[arbIntros[0]]
-                    arb2 = self.steps[arbIntros[1]]
                     # check that lines are intros?
-                    if arb1.LHS in self.env['setElements'][setName] and arb2.LHS in self.env['setElements'][setName] and ev.RHS == self.env['setProperty'][setName][1].RHS: 
-                        self.env['setProperty'][setName].append('Closure')
-                        self.steps += [f'Set {setName} is closed']
-                        self.justifications += [f'Introduction on lines {arbIntros[0]},{arbIntros[1]} and closure on line {closure}'] 
-                        self.show()
-                    else:
-                        messagebox.showerror('Proof error',f'These lines do not prove closure, double check you typed everythin in correctly')
+                    if arb1.LHS in self.env['setElements'][setName] and arb2.LHS in self.env['setElements'][setName]:
+                        if isinstance(self.env['setProperty'][setName][1],Eq): 
+                            if len(ev.LHS.products) == 2 and arb1.LHS in ev.LHS.products and arb2.LHS in ev.LHS.products:
+                                self.env['setProperty'][setName].append('Closure')
+                                self.steps += [f'Set {setName} is closed']
+                                self.justifications += [f'Introduction on lines {arbIntros[0]},{arbIntros[1]} and closure on line {closure}'] 
+                                self.show()
+                            else:
+                                messagebox.showerror('Proof error',f'These lines do not prove closure, double check you typed everythin in correctly')
+                elif isinstance(ev,In):
+                    if isinstance(self.env['setProperty'][setName][1],In): 
+                        if len(ev.elem.products) == 2 and arb1.elem in ev.elem.products and arb2.elem in ev.elem.products and ev.group == arb1.group and ev.group == arb2.group:
+                            self.env['setProperty'][setName].append('Closure')
+                            self.steps += [f'Set {setName} is closed']
+                            self.justifications += [f'Introduction on lines {arbIntros[0]},{arbIntros[1]} and closure on line {closure}'] 
+                            self.show()
+                        else:
+                            messagebox.showerror('Proof error',f'These lines do not prove closure, double check you typed everythin in correctly')
                 else:
                     messagebox.showerror('Proof error',f'Line proving closure must be an equation of the form a*b=c where a,b are arbitrary elements of set {setName} and c is in set {setName}')
             else:
@@ -239,7 +307,8 @@ class Proof:
                 if len(ev.LHS.products) == 2:
                     el1 = ev.LHS.products[0]
                     el2 = ev.LHS.products[1]
-                    if el1 in self.env['setElements'][setName] and el2 in self.env['setElements'][setName]:
+                    if str(el1) in self.env['setElements'][setName] and str(el2) in self.env['setElements'][setName]:
+                        print(type(ev.RHS.products[0]),type(self.env['setProperty'][setName][0].elements['e'].products[0]))
                         if self.env['setProperty'][setName][0].elements['e'].products == ev.RHS.products:
                             self.env['setProperty'][setName].append('Inverses')
                             self.steps += [f'Set {setName} contains inverses']
@@ -294,6 +363,26 @@ class Proof:
             l.append(element2)
         return Mult(l)
 
+    def introInverse(self, G, name):
+        if isinstance(name,str):
+            if not G.contains(name):
+                print('Proof Error', f"{name} is not defined")
+                return
+        else:
+            for x in name.products:
+                if not G.contains(x):
+                   print('Proof Error', f"{x} is not defined")
+                   return
+        if isinstance(name,str):
+            lhs = self.MultElem(inverse(name,G),G.elements[name])    
+        else:
+            name_ = Mult([G.elements[x] for x in name.products])
+            lhs = self.MultElem(inverse(name_,G),name_)
+        G.newInverse(name)
+        rhs = G.elements["e"]
+        self.steps += [Eq(lhs,rhs,G)]
+        self.justifications += ["Introducing the inverse of an element"]
+        self.show()
 
     def substituteRHS(self, lineNum1, lineNum2):
         """

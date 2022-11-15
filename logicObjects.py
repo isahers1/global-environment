@@ -265,7 +265,7 @@ class identity(element):
 
 class inverse(element):
     def __init__(self, elementName, pg):
-        inverseName = elementName + "^(-1)"
+        inverseName = '(' + elementName + ")^(-1)"
         super().__init__(inverseName, pg)
         lhs = Mult([inverseName,elementName]) # self or elementName?
         rhs = Mult([pg.identity_identifier])
