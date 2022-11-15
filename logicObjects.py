@@ -244,6 +244,8 @@ class thereexists:
     def toLaTeX(self):
         return r"\exists " + ",".join(self.existelems) + r" \in " + str(self.group)  + r"\ " + self.toLaTeX(self.eq)
 
+
+
 ## Unique class - idk if we need this
 
 class uniqueElementProperty:
