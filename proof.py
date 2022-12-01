@@ -136,6 +136,7 @@ class Proof:
         :param elementName: name of the element
         :param grp: grp that contains the element
         """
+        print(grp.elements)
         if 'sets' in self.env:
             if setName in self.env['sets']:
                 if elementName not in self.env['setElements'][setName]:
@@ -282,7 +283,7 @@ class Proof:
         if setName in self.env['sets']:
             if isinstance(ev, Eq):
                 if ev.LHS in self.env['setElements'][setName]:
-                    if self.env['setProperty'][setName][0].elements['e'].products == ev.RHS.products:
+                    if self.env['setProperty'][setName][0].elements['e'] == ev.RHS:
                         self.env['setProperty'][setName].append('Identity')
                         self.steps += [f'Set {setName} contains the identity']
                         self.justifications += [f'Identity equal to element of set {setName} on line {lineNum}'] 
@@ -309,8 +310,8 @@ class Proof:
                     el1 = ev.LHS.products[0]
                     el2 = ev.LHS.products[1]
                     if str(el1) in self.env['setElements'][setName] and str(el2) in self.env['setElements'][setName]:
-                        print(type(ev.RHS.products[0]),type(self.env['setProperty'][setName][0].elements['e'].products[0]))
-                        if self.env['setProperty'][setName][0].elements['e'].products == ev.RHS.products:
+                        print(type(ev.RHS), type(self.env['setProperty'][setName][0].elements['e']))
+                        if self.env['setProperty'][setName][0].elements['e'] == ev.RHS:
                             self.env['setProperty'][setName].append('Inverses')
                             self.steps += [f'Set {setName} contains inverses']
                             self.justifications += [f'Identity equal to product of two elements of {setName} on line {lineNum}'] 
@@ -770,7 +771,6 @@ class Proof:
         evidence = self.steps[lineNum]
         if isinstance(evidence,Eq): 
             l = evidence.RHS.products
-            print(type(l[0]),type(l[1]))
             l1=[]
             for i in range(len(l)-1):
                 # deals with the case a*1
@@ -787,7 +787,10 @@ class Proof:
             if l1==[]:
                 print ('\n' + "Identity can't be applied")
             else:
-                newProduct = Mult(l1)
+                if len(l1) != 1:
+                    newProduct = Mult(l1)
+                else:
+                    newProduct = l1[0]
                 ret = Eq(evidence.LHS,newProduct,evidence.group)
                 self.steps += [ret]
                 self.justifications += ["identity elimination "] 
@@ -1032,7 +1035,7 @@ class Proof:
             print('Proof Error',f"The statement on line {lineNum} isn't an And statement")
     
     def introInverse(self, G, name):
-        if type(name) == "str":
+        if type(name) == str:
             if not G.contains(name):
                 print('Proof Error', f"{name} is not defined")
                 return
@@ -1041,13 +1044,17 @@ class Proof:
                 if not G.contains(x):
                    print('Proof Error', f"{x} is not defined")
                    return
+                
         if type(name) == str:
-            lhs = self.MultElem(inverse(name,G),G.elements[name])
-            
+            name_ = name
+            lhs = self.MultElem(inverse(name_,G),G.elements[name_])
         else:
             name_ = Mult([G.elements[x] for x in name.products])
             lhs = self.MultElem(inverse(name_,G),name_)
-        rhs = Mult([G.elements["e"]])
+        
+        G.newElement(str(inverse(name_,G)))
+        rhs = G.elements["e"]
         self.steps += [Eq(lhs,rhs,G)]
         self.justifications += ["Introducing the inverse of an element"]
         self.show()
+        print(G.elements)
