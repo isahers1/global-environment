@@ -3,7 +3,7 @@
 ## Set up
 
 1. Clone the repository using `git clone`
-2. Install packages using preferred installer - need to fix, create pip requirements file
+2. Install packages using pip (run `pip install -r pip-requirements.txt` in the command line)
 
 ## Codebase
 

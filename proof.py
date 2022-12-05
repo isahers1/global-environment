@@ -593,7 +593,7 @@ class Proof:
                 product = self.MultElem(eq.LHS,inverse(elemName,eq.group))
                 result = Eq(product, self.MultElem(eq.RHS, inverse(elemName,eq.group)), eq.group)
                 self.steps += [result]
-                self.justifications += ['Right multiply line {lineNum} by '  + elemName]
+                self.justifications += [f'Right multiply line {lineNum} by '  + elemName]
                 self.show()
             else:
                 print('Proof Error', "The element " + elemName + " is not in the " + str(eq.group))
@@ -607,7 +607,7 @@ class Proof:
                 product = self.MultElem(inverse(elemName,eq.group), eq.LHS)
                 result = Eq(product, self.MultElem(inverse(elemName,eq.group), eq.RHS), eq.group)
                 self.steps += [result]
-                self.justifications += ['Right multiply line {lineNum} by '  + elemName]
+                self.justifications += [f'Right multiply line {lineNum} by '  + elemName]
                 self.show()
             else:
                 print('Proof Error', "The element " + elemName + " is not in the " + str(eq.group))

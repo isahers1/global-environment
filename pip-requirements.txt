@@ -1,0 +1,4 @@
+pylatex
+dataclasses
+fitz
+ttkwidgets
