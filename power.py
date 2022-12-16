@@ -1,5 +1,8 @@
 exec(compile(source=open('integer.py').read(), filename='integer.py', mode='exec'))
 exec(compile(source=open('element.py').read(), filename='element.py', mode='exec'))
+
+from integer import integer
+from logicObjects import Mult
 ##need to deal with operations with one variable and an actual int (ex. x+2 or e^x*e^2)
 ##subtypes/subclasses? a power object is also a mult object which is also an element. 
 
@@ -8,17 +11,20 @@ class power:
         if isinstance(exp, str):
             exp = integer(exp)
         self.exponent = exp
-        self.element= element 
+        self.element= element
+        
     
     def __repr__(self):
-        return f"{self.element} ^ {self.exponent}"
-    
+        if isinstance(self.element,power):
+            return f"({self.element}) ^ ({self.exponent})"
+        else:
+            return f"{self.element} ^ ({self.exponent})"
     ##cases: 1.e^a*e^b 2.e1^a*e2^b
     def __mul__(self,other):
         if self.element == other.element: 
             if isinstance(self.exponent,integer) and isinstance(other.exponent,integer):  
-                expnew = self.exponent + "+" + other.exponent
-                return power(self, expnew)
+                expnew = self.exponent + other.exponent
+                return power(self.element, expnew)
             elif isinstance(self.exponent,int) and isinstance(other.exponent,integer):
                 expnew = str(self.exponent) + "+" + other.exponent
                 return power(self, expnew)
@@ -30,9 +36,8 @@ class power:
                 return power(self, expnew)
         ##if they are not both powers, we can just use mult from elements
         else: 
-            mult(self,other, self.element.group)
+            return Mult[self,other, self.element.group]
 
-    
     def __truediv__(self,other):
         if self.element == other.element: 
             expnew = self.exponent + "-" + other.exponent
@@ -47,7 +52,6 @@ class power:
                 expnew = self.exponent - other.exponent
                 return power(self, expnew)
     
-
 
     def __eq__(self, other):
         if isinstance(self,power) and isinstance(other,power):

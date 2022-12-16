@@ -3,6 +3,8 @@ from dataclasses import replace
 from re import L
 
 from element import *
+from integer import *
+
 
 class Mult:
     def __init__(self, elemList):
@@ -40,6 +42,7 @@ class Mult:
                     new_products.append(self.products[i])
                     i+=1
         return Mult(new_products)
+        
     
     def toLaTeX(self):
         return "".join(self.elemList)
@@ -154,11 +157,22 @@ class Eq:
         else: 
             return False
 
-    def replace(self, var, expr):
-        return Eq(self.LHS.replace(var,expr), self.RHS.replace(var,expr), self.group)
+class Inequality:
+    def __init__(self,LHS,RHS,sign):
+        self.LHS = LHS
+        self.RHS = RHS
+        self.sign = sign
+
+    def __repr__(self):
+        print(self.LHS.value)
+        return str(self.LHS) + self.sign + str(self.RHS)
     
     def toLaTeX(self):
-        return str(self.LHS) + r" = " + str(self.RHS)
+        #need to implement
+        return
+
+    
+
 
 def reduce(exp):
     if isinstance(exp, Eq):
@@ -273,21 +287,47 @@ class inverse(element):
     def __init__(self, object, pg):
         if type(object) == str:
             elementName = object
+            if elementName in pg.elements:
+                element = pg.elements[elementName]
+            else:
+                element = None
             inverseName = elementName + "^(-1)"
-            # lhs = Mult([inverseName,pg.elements[object]])
         else:
+            element = object
             elementName = repr(object)
             inverseName = "(" + elementName + ")" + "^(-1)"
             # lhs = Mult([inverseName]+object.products)
+        
         super().__init__(inverseName, pg)
+        self.element = element
         self.inverseName = inverseName
         self.elementName = elementName
+        self.elementOrder = None
+        self.group = pg
+        if str(self) not in pg.elements:
+            pg.elements.update({str(self):self})
     def __repr__(self):
         return self.inverseName
          # self or elementName?
         # rhs = Mult([pg.identity_identifier])
         # inverseEq = Eq(lhs,rhs,pg)
         # pg.addGroupProperty(inverseEq, "Inverse of " + elementName)
+
+class Order(integer):
+    def __init__(self, element):
+        super().__init__(element)
+        self.elementName = element
+        self.value = str(self)
+        
+    def __repr__(self):
+        return f"|{self.elementName}|"
+    
+    
+
+class integerExpression(integer):
+    def __init__(self,expression):
+        super().__init__(expression)
+        self.value = expression
 
 
 ## TO DO: class generator(element):

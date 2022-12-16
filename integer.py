@@ -2,19 +2,26 @@
 
 class integer:
     def __init__(self, input):
-        if isinstance(input, str):
-            self.value = "("+input+")"
+        # if isinstance(input, str):
+        self.value = input
     
     def __repr__(self):
-        return "integer(" + self.value + ")"
+        return self.value
+
 
     def __mul__(self,other):
-        inputnew = self.value + "*" + other.value
-        return integer(self, inputnew)
+        if isinstance(other, int):
+            inputnew = str(other) + "*" + self.value
+        elif isinstance(other, integer):
+             inputnew = self.value + "*" + other.value
+        return integer(inputnew)
     
     def __add__(self,other):
-        inputnew = self.value + "+" + other.value
-        return integer(self, inputnew)
+        if other.value[0] == "-":
+            inputnew = self.value + "+(" + other.value +")"
+        else:
+            inputnew = self.value + "+" + other.value
+        return integer(inputnew)
     
     def __sub__(self,other):
         inputnew = self.value + "-" + other.value
@@ -37,24 +44,24 @@ class integer:
                 b2 = other_string.split["+"][0]
                 a2 = other_string.split["+"][1]
                 return a1==a2 and b1==b2
-            elif "-" in self_string and "-" in other_string: 
-                a1 = self_string.split["-"][0]
-                b1 = self_string.split["-"][1]
-                b2 = other_string.split["-"][0]
-                a2 = other_string.split["-"][1]
-                return a1==a2 and b1==b2
+            # elif "-" in self_string and "-" in other_string: 
+            #     a1 = self_string.split["-"][0]
+            #     b1 = self_string.split["-"][1]
+            #     b2 = other_string.split["-"][0]
+            #     a2 = other_string.split["-"][1]
+            #     return a1==a2 and b1==b2
             elif "*" in self_string and "*" in other_string: 
                 a1 = self_string.split["*"][0]
                 b1 = self_string.split["*"][1]
                 b2 = other_string.split["*"][0]
                 a2 = other_string.split["*"][1]
                 return a1==a2 and b1==b2
-            elif "/" in self_string and "/" in other_string: 
-                a1 = self_string.split["/"][0]
-                b1 = self_string.split["/"][1]
-                b2 = other_string.split["/"][0]
-                a2 = other_string.split["/"][1]
-                return a1==a2 and b1==b2
+            # elif "/" in self_string and "/" in other_string: 
+            #     a1 = self_string.split["/"][0]
+            #     b1 = self_string.split["/"][1]
+            #     b2 = other_string.split["/"][0]
+            #     a2 = other_string.split["/"][1]
+            #     return a1==a2 and b1==b2
             else:
                 return False
         else: 

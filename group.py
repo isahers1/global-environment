@@ -6,6 +6,7 @@ class group:
     # TRUTHS for all classes - need to add more here
     identity_identifier = 'e'
     elements = {}
+    integers = {}
     groupProperties = {} 
     elementProperties = {}
     binaryOperator = ""

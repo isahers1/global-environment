@@ -9,6 +9,7 @@ QUESTIONS:
 
 class element:
     elementName = ""
+    elementOrder = None
     parentGroups = []
     elementProperties = {}
 
@@ -46,6 +47,9 @@ class element:
 
     def addProperty(self, property, propertyName):
         self.elementProperties[propertyName] = property
+    
+    def order(self):
+        return self.elementOrder
 
 #My current vision is to have an arbitrary element class and an existential element class
 #A for all is an equation including an arbitrary element, and a there exists is an equation including an existential element

@@ -5,9 +5,62 @@ from element import *
 from group import *
 from integer import *
 from logicObjects import *
+from power import *
 from tkinter import messagebox
 from pylatex import Document, Section, Subsection, Command, Enumerate
 from pylatex.utils import italic, NoEscape
+import sympy
+
+def replacePower(mult, var, expr):
+                    new_products = []
+                    i = 0
+                    while i < len(mult.products):
+                        if isinstance(mult.products[i],power):
+                            if repr(mult.products[i].exponent) == var:
+                                power_temp = copy.deepcopy(mult.products[i])
+                                try:
+                                    power_temp.exponent = int(expr)
+                                except:
+                                    power_temp.exponent = integer(expr)
+                                new_products.append(power_temp)
+                                i+=1
+                            else:
+                                new_products.append(mult.products[i])
+                                i+=1
+                        else:
+                                new_products.append(mult.products[i])
+                                i+=1
+                        return new_products
+
+def integerReplace(value, var, expr):
+   
+    if isinstance(value, Order):
+        print(value, var)
+        if value == var:
+            newValue = expr
+        else:
+            newValue = value
+    elif not isinstance(value,Order):
+        value = value.value
+        newValue = ""
+        i = 0
+        while i < len(value):
+            if value[i:i+len(var.value)] == var.value:
+                    newValue += expr.value
+                    i+=len(var.value)
+            else:
+                newValue += value[i]
+                i+=1
+        newValue = integer(newValue)
+    return newValue
+
+def helperMergePower(input):
+            while isinstance(input.element, power) or isinstance(input.element, inverse):
+                if isinstance(input.element, power):
+                    input = power(input.element.element, input.exponent * input.element.exponent)
+                else:
+                    input = (power(input.element.group.elements[input.element.elementName], input.exponent * (-1)))
+            return input
 
 class Proof:
     def __init__(self, label, assumption, goal=None, steps=[], justifications = [], depth=0, linestart=0): # make goal optional
@@ -20,6 +73,8 @@ class Proof:
         self.justifications = justifications
         self.env = {}
         self.subproof = None
+        self.allgroup = group('U','*')
+
     
     def qed(self, lineNum):
         if self.goal == self.steps[lineNum]:
@@ -351,12 +406,25 @@ class Proof:
                 product = self.MultElem(inverse(elemName,eq.group), eq.LHS)
                 result = Eq(product, self.MultElem(inverse(elemName,eq.group), eq.RHS), eq.group)
                 self.steps += [result]
-                self.justifications += ['Right multiply line {lineNum} by '  + elemName]
+                self.justifications += [f'Right multiply line {lineNum} by'  + elemName]
                 self.show()
             else:
                 print('Proof Error', "The element " + elemName + " is not in the " + str(eq.group))
         else:
             print('Proof Error', f"Line {lineNum} is not an equation")
+
+    def rightMultPower(self, eleName, exp, lineNum):
+        eq = copy.deepcopy(self.steps[lineNum])
+        if isinstance(eq,Eq):
+            if eleName in eq.group.elements:
+                if not isinstance(exp,integer):
+                    exp = integerExpression(exp)
+                multiplier = power(eq.group.elements[eleName],exp)
+                product = self.MultElem(eq.LHS, multiplier)
+                result = Eq(product, self.MultElem(eq.RHS, multiplier),eq.group)
+                self.steps += [result]
+                self.justifications += [f'Right multiply line {lineNum} by {multiplier}']
+                self.show()
 
     ##power methods 
     def breakPower(self,input):
@@ -421,27 +489,7 @@ class Proof:
             print('Proof Error',f"Expected a power object but received type {type(input)}")     
              
 
-    def splitPowerMult(self,input):
-        """
-        Simplify power objects: Given an expression e^a*b=(e^a)^b
-        :param lineNum: the power object with mult in exponent to be modified
-        """ 
-        if isinstance(input, power) == False:       
-            element = input.element
-            exp=input.exponent
-            l=exp.split("*")
-            if len(l)==1:
-                print('Proof Error',"No power multiplication to be split apart")
-            else:
-                elem=element
-                for i in l: 
-                    e=power(elem,i)
-                    elem=e
-                self.steps += [elem]
-                self.justifications += ["Split up power with multiplication in exponents"] 
-                self.show()
-        else:
-            print('Proof Error',f"Expected a power object but received type {type(input)}")
+    
     
     ## Identity and equality elimination
     def rightSidesEq(self, lineNum1, lineNum2):
@@ -777,7 +825,7 @@ class Proof:
             print('Proof Error',f"The statement on line {lineNum} isn't an And statement")
     
     def introInverse(self, G, name):
-        if type(name) == "str":
+        if type(name) == str:
             if not G.contains(name):
                 print('Proof Error', f"{name} is not defined")
                 return
@@ -796,3 +844,251 @@ class Proof:
         self.steps += [Eq(lhs,rhs,G)]
         self.justifications += ["Introducing the inverse of an element"]
         self.show()
+
+    def introOrder(self, G, name, order):
+        # if isinstance(name,inverse):
+        #     eleName = str(name)
+        #     elem = name
+        # else:
+        #     eleName = name
+        #     elem = G.elements[name]
+        if isinstance(name,inverse):
+            name = str(name)
+        if name in G.elements:
+            G.elements[name].elementOrder = order
+            self.steps += [Eq(Order(name),integer(order),G)]
+            self.justifications += [f"Introduce order of an element"]
+            self.show()  
+        else:
+            print(f"Proof Error: {name} not found")
+    
+    def orderProperty(self, G, name):
+        if isinstance(name,inverse):
+            name = str(name)
+        if name in G.elements:
+            elem = G.elements[name]
+            if elem.elementOrder:
+                lhs = Mult([power(elem, elem.elementOrder)])
+                rhs = Mult([G.elements["e"]])
+                eq = Eq(lhs,rhs,G)
+                self.steps += [eq]
+                self.justifications += ["Order property"]
+                self.show() 
+            else:
+                print('Proof Error', f"order of {elem} is not defined")
+        else:
+            print('Proof Error', f'Element {elem} is not in group {G}')
+
+            
+    
+    def introInteger(self, G, integername):
+        G.integers.update({integername:integer(integername)})
+        self.steps += [f"introduce integer {integername}"]
+        self.justifications += ["Introducing an integer"]
+        self.show()
+    
+    # combine power with same base and turn a^0 to e
+    def powerSimplifyLeft(self, lineNum):
+        # combine power of same base
+        eq = copy.deepcopy(self.steps[lineNum])
+        group = eq.group
+        if isinstance(eq,Eq):
+            lawApplied = False
+            l = eq.LHS.products.copy()
+            for i in range(len(l)-1):
+                if isinstance(l[i],power) and isinstance(l[i+1],power) and (l[i].element == l[i+1].element):
+                    l[i] = l[i] * l[i+1]
+                    newProducts = Mult(l[:i+1]+l[i+2:])
+                    lawApplied = True
+                    break
+        for i in range(len(l)):
+            if isinstance(l[i],power) and isinstance (l[i].exponent, int) and (l[i].exponent == 0):
+                group = l[i].element.parentGroups[0]
+                l[i] = group.elements[group.identity_identifier]
+                newProducts = Mult(l)
+                lawApplied = True
+        if lawApplied == True:
+            self.steps += [Eq(newProducts,eq.RHS,eq.group)]
+            self.justifications += [f'Power simplified on line {lineNum}'] 
+            self.show()
+        else:
+            print("law can't be applied")
+
+
+    def insertIntegerEquation(self,expr):
+        lhs, rhs = expr.split("=")
+        if (sympy.simplify(lhs)) == (sympy.simplify(rhs)):
+            self.steps += [Eq(lhs,rhs,self.allgroup)]
+            self.justifications += ['introduce integer equation'] 
+            self.show()
+        else:
+            print("wrong equation")
+
+    #substitute for the exponent, work only if lineNum2 has integer equation
+    def substituteIntegerRHS(self, lineNum1, lineNum2):
+        ev1 = self.steps[lineNum1]
+        ev2 = self.steps[lineNum2]
+        if isinstance(ev2, Eq):
+            if isinstance(ev1, Eq) and isinstance(ev1.LHS,Mult):
+
+                new_products_lhs = replacePower(ev1.LHS, ev2.LHS, ev2.RHS)
+                new_products_rhs = replacePower(ev1.RHS, ev2.LHS, ev2.RHS)
+                
+                eq = Eq(Mult(new_products_lhs), Mult(new_products_rhs), ev1.group)
+                self.steps += [eq]
+                self.justifications += [f'Replaced all instances of {ev2.LHS} with {ev2.RHS} on line {lineNum1}']
+                self.show()
+            elif isinstance(ev1, Eq) or isinstance(ev1, Inequality):
+
+
+                valueLHS = integerReplace(ev1.LHS.value, ev2.LHS, ev2.RHS)
+                valueRHS = integerReplace(ev1.RHS.value, ev2.LHS, ev2.RHS)
+
+                if isinstance(ev1, Eq):
+                    result = Eq(valueLHS, valueRHS, self.allgroup)
+                else:
+                    result = Inequality(valueLHS, valueRHS, ev1.sign)
+                self.steps += [result]
+                self.justifications += [f'Replaced all instances of {ev2.LHS} with {ev2.RHS} on line {lineNum1}']
+                self.show()
+            else:
+                print('Proof Error',f"The statement on line {lineNum2} is not an equality, substitutition is not possible")
+        else:
+            print('Proof Error',f"The statement on line {lineNum1} is not an equality, substitutition is not possible")
+
+    #substitute for the exponent, work only if lineNum2 has integer equation
+    def substituteIntegerLHS(self, lineNum1, lineNum2):
+        ev1 = self.steps[lineNum1]
+        ev2 = self.steps[lineNum2]
+        if isinstance(ev2, Eq):
+            if isinstance(ev1, Eq) and isinstance(ev1.LHS,Mult):
+                new_products_lhs = replacePower(ev1.LHS, ev2.RHS, ev2.LHS)
+                new_products_rhs = replacePower(ev1.RHS, ev2.RHS, ev2.LHS)
+                eq = Eq(Mult(new_products_lhs), Mult(new_products_rhs), ev1.group)
+                self.steps += [eq]
+                self.justifications += [f'Replaced all instances of {ev2.LHS} with {ev2.RHS} on line {lineNum1}']
+                self.show()
+            elif isinstance(ev1, Eq) or isinstance(ev1, Inequality):
+
+                valueLHS = integerReplace(ev1.LHS, ev2.RHS, ev2.LHS)
+                valueRHS = integerReplace(ev1.RHS, ev2.RHS, ev2.LHS)
+
+                if isinstance(ev1, Eq):
+                    result = Eq(valueLHS, valueRHS, self.allgroup)
+                else:
+                    result = Inequality(integer(valueLHS), integer(valueRHS), ev1.sign)
+                self.steps += [result]
+                self.justifications += [f'Replaced all instances of {ev2.RHS} with {ev2.LHS} on line {lineNum1}']
+                self.show()
+                
+            else:
+                print('Proof Error',f"The statement on line {lineNum2} is not an equality, substitutition is not possible")
+        else:
+            print('Proof Error',f"The statement on line {lineNum1} is not an equality, substitutition is not possible")
+
+
+    def mergePowerMult(self,lineNum):
+
+        
+        
+        eq = self.steps[lineNum]
+        lhs = eq.LHS.products
+        rhs = eq.RHS.products
+        newLhsList = []
+        newRhsList = []
+        merge = False
+        for elem in lhs:
+            if isinstance(elem, power) == True:       
+               elem = helperMergePower(elem)
+               merge = True
+            newLhsList.append(elem)
+        
+        for elem in rhs:
+            if isinstance(elem, power) == True:       
+               elem = helperMergePower(elem)
+               merge = True
+            newRhsList.append(elem)
+        newLhs = Mult(newLhsList)
+        newRhs = Mult(newRhsList)
+        newEq = Eq(newLhs, newRhs, eq.group)
+        if merge == True:
+            self.steps += [newEq]
+            self.justifications += ["Split up power with multiplication in exponents"] 
+            self.show()
+        else:
+            print('Warning',f"no power can be splitted")
+
+        
+    def splitPowerMult(self,lineNum):
+        def helperSplitPower(input):
+            element = input.element
+            exp=input.exponent
+            l=str(exp).split("*")
+            if len(l)>1:
+                elem=element
+                for i in l: 
+                    if i[0] == "(" and i[-1] == ")":
+                        i = i[1:-1]
+                    e=power(elem,i)
+                    elem=e
+            return elem
+        eq = self.steps[lineNum]
+        lhs = eq.LHS.products
+        rhs = eq.RHS.products
+        newLhsList = []
+        newRhsList = []
+        split = False
+        for elem in lhs:
+            if isinstance(elem, power) == True:       
+               elem = helperSplitPower(elem)
+               split = True
+            newLhsList.append(elem)
+        for elem in rhs:
+            if isinstance(elem, power) == True:       
+               elem = helperSplitPower(elem)
+               split = True
+            newRhsList.append(elem)
+        newLhs = Mult(newLhsList)
+        newRhs = Mult(newRhsList)
+        newEq = Eq(newLhs, newRhs, eq.group)
+        if split == True:
+            self.steps += [newEq]
+            self.justifications += ["Split up power with multiplication in exponents"] 
+            self.show()
+        else:
+            print('Warning',f"no power can be splitted")
+        
+    def identifyOrder(self, lineNum):
+        eq = self.steps[lineNum]
+        if len(eq.LHS.products) == 1 and isinstance(eq.LHS.products[0],identity):
+            if len(eq.RHS.products) == 1 and isinstance(eq.RHS.products[0],power):
+                power_ = eq.RHS.products[0]
+                ineq = Inequality(Order(power_.element), power_.exponent, "<=")
+                self.steps += [ineq]
+                self.justifications += [f"power of {power_.element} is less than {power_.exponent}"] 
+                self.show()
+        elif len(eq.RHS.products) == 1 and isinstance(eq.RHS.products[0],identity):
+            if len(eq.LHS.products) == 1 and isinstance(eq.LHS.products[0],power):
+                power_ = eq.LHS.products[0]
+                ineq = Inequality(Order(power_.element), power_.exponent, "<=")
+                self.steps += [ineq]
+                self.justifications += [f"power of {power_.element} is less than {power_.exponent}"] 
+                self.show()
+        
+    
+    def solveInequality(self,lineNum1, lineNum2):
+        ineq1 = self.steps[lineNum1]
+        ineq2 = self.steps[lineNum2]
+        if isinstance(ineq1,Inequality) and isinstance(ineq2,Inequality):
+
+            if ineq1.LHS == ineq2.LHS and ineq1.RHS == ineq2.LHS:
+                if [ineq1.sign, ineq2.sign] in [["<=",">="],[">=","<="]]:
+                    print("yes")
+            #elif ineq1.LHS == ineq2.RHS and 
+
+            # elif ineq1.RHS == ineq2.LHS:
+            #     print ("yes")
+            #     if [ineq1.sign, ineq2.sign] in [[">=",">="],["<=","<="]]:
+            #         print ("yes")
+        else:
+            print("not inequality")
