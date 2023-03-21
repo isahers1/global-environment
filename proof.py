@@ -1,15 +1,17 @@
-import os, sys
-from re import L
+# import os, sys
+# from re import L
 
 from element import *
 from group import *
 from integer import *
 from logicObjects import *
 from power import *
-from tkinter import messagebox
-from pylatex import Document, Section, Subsection, Command, Enumerate
-from pylatex.utils import italic, NoEscape
+# from tkinter import messagebox
+# from pylatex import Document, Section, Subsection, Command, Enumerate
+# from pylatex.utils import italic, NoEscape
+
 import sympy
+
 
 def replacePower(mult, var, expr):
                     new_products = []
@@ -32,26 +34,28 @@ def replacePower(mult, var, expr):
                                 i+=1
                         return new_products
 
-def integerReplace(value, var, expr):
+def integerReplace(integerValue, old, new):
    
-    if isinstance(value, Order):
-        print(value, var)
-        if value == var:
-            newValue = expr
+    if isinstance(integerValue, Order):
+        if integerValue == old:
+            newValue = new
         else:
-            newValue = value
-    elif not isinstance(value,Order):
-        value = value.value
-        newValue = ""
-        i = 0
-        while i < len(value):
-            if value[i:i+len(var.value)] == var.value:
-                    newValue += expr.value
-                    i+=len(var.value)
-            else:
-                newValue += value[i]
-                i+=1
-        newValue = integer(newValue)
+            newValue = integerValue
+    elif not isinstance(integerValue,Order):
+        # integerValue = integerValue.value
+        # print(type(integerValue))
+        # newValue = ""
+        # i = 0
+        # while i < len(integerValue):
+        #     if integerValue[i:i+len(old.value)] == old.value:
+        #             newValue += new.value
+        #             i+=len(old.value)
+        #     else:
+        #         newValue += integerValue[i]
+        #         i+=1
+        # newValue = integer(newValue)
+        if integerValue == old:
+            newValue = new
     return newValue
 
 def helperMergePower(input):
@@ -74,6 +78,7 @@ class Proof:
         self.env = {}
         self.subproof = None
         self.allgroup = group('U','*')
+        self.interface = False
 
     
     def qed(self, lineNum):
@@ -89,21 +94,21 @@ class Proof:
         self.justifications = self.justifications[:-1]
         self.show()
     
-    def writeLaTeXfile(self):
-        doc = Document(page_numbers=False)
-        doc.preamble.append(Command('title', self.label))
-        doc.append(NoEscape(r'\maketitle'))
-        doc.append(italic("Proof:"))
-        with doc.create(Enumerate()) as enum:
-            doc.append(NoEscape(r"\addtocounter{enumi}{-1}"))
-            for i in range(len(self.steps)):
-                if isinstance(self.steps[i],str):
-                    enum.add_item(NoEscape(self.steps[i]+r"\hfill"))
-                else:
-                    enum.add_item(NoEscape("$"+self.steps[i].toLaTeX()+r"$\hfill"))
-                enum.append(" by " + str(self.justifications[i]))
-        doc.generate_tex(self.label)
-        doc.generate_pdf(self.label)
+    # def writeLaTeXfile(self):
+    #     doc = Document(page_numbers=False)
+    #     doc.preamble.append(Command('title', self.label))
+    #     doc.append(NoEscape(r'\maketitle'))
+    #     doc.append(italic("Proof:"))
+    #     with doc.create(Enumerate()) as enum:
+    #         doc.append(NoEscape(r"\addtocounter{enumi}{-1}"))
+    #         for i in range(len(self.steps)):
+    #             if isinstance(self.steps[i],str):
+    #                 enum.add_item(NoEscape(self.steps[i]+r"\hfill"))
+    #             else:
+    #                 enum.add_item(NoEscape("$"+self.steps[i].toLaTeX()+r"$\hfill"))
+    #             enum.append(" by " + str(self.justifications[i]))
+    #     doc.generate_tex(self.label)
+    #     doc.generate_pdf(self.label)
 
     def showReturn(self):
         showstr = ""
@@ -131,21 +136,44 @@ class Proof:
         return showstr
 
     def show(self):
-        if self.depth==0:
-            print('')
-            print('Proof : ' + self.label)
-            print('--------------------------------')
+        if self.interface:
+            i = len(self.steps)-1
+            print ("\t"*self.depth + str(i) + ': ' + str(self.steps[i]) + '\t' + str(self.justifications[i]))
         else:
-            print('Subproof : assume ' + str(self.assumption))
-            print('--------------------------------')
-        i = self.linestart
-        while i < len(self.steps):
-            if isinstance(self.steps[i],Proof):
-                self.steps[i].show()
-                i+=len(self.steps[i].steps)-self.steps[i].linestart-1
+            if self.depth==0:
+                print('')
+                print('Proof : ' + self.label)
+                print('--------------------------------')
             else:
-                print("\t"*self.depth + str(i) + ': ' + str(self.steps[i]) + '\t' + str(self.justifications[i]))
-            i+=1
+                print('Subproof : assume ' + str(self.assumption))
+                print('--------------------------------')
+            i = self.linestart
+            while i < len(self.steps):
+                if isinstance(self.steps[i],Proof):
+                    self.steps[i].show()
+                    i+=len(self.steps[i].steps)-self.steps[i].linestart-1
+                else:
+                    print("\t"*self.depth + str(i) + ': ' + str(self.steps[i]) + '\t' + str(self.justifications[i]))
+                i+=1
+
+    # def show(self):
+    #     out = ""
+    #     if self.depth==0:
+    #         out += ('\n')
+    #         out += ('Proof : ' + self.label + "\n")
+    #         out += ('--------------------------------\n')
+    #     else:
+    #         out += ('Subproof : assume ' + str(self.assumption)+"\n")
+    #         out += ('--------------------------------\n')
+    #     i = self.linestart
+    #     while i < len(self.steps):
+    #         if isinstance(self.steps[i],Proof):
+    #             self.steps[i].show()
+    #             i+=len(self.steps[i].steps)-self.steps[i].linestart-1
+    #         else:
+    #             out += ("\t"*self.depth + str(i) + ': ' + str(self.steps[i]) + '\t' + str(self.justifications[i])+"\n")
+    #         i+=1
+    #     return out
 
     def introAssumption(self, expr):
         self.steps += [expr]
@@ -244,37 +272,6 @@ class Proof:
                 print('Proof Error',f"Line {str(lineNum1)} is not an implies statement")
         else:
             print('Proof Error',"The second argument should be a list, maybe you only have one assumption - make sure to put it into a singleton list")
-
-    def inverseElimRHS(self,lineNum):
-        """
-        finds the first pair of group element and its inverse and returns the group element
-        :param lineNum: the line of the proof to be modified on the right hand side
-        """
-        evidence = copy.deepcopy(self.steps[lineNum])
-        if isinstance(evidence,Eq): 
-            l = evidence.RHS.products.copy()
-            lawApplied = False
-            for i in range(len(l)-1):
-                if isinstance(l[i],element) and isinstance(l[i+1],inverse) and (l[i].elementName == l[i+1].elementName):
-                    group = l[i].parentGroups[0] # how to deal with multiple groups?
-                    l[i] = group.identity_identifier
-                    newProducts = Mult(l[:i+1]+l[i+2:])
-                    lawApplied=True
-                    break
-                elif isinstance(l[i],inverse) and isinstance(l[i+1],element) and (l[i].elementName == l[i+1].elementName):
-                    group = l[i+1].parentGroups[0] # how to deal with multiple groups?
-                    l[i] = group.identity_identifier
-                    newProducts = Mult(l[:i+1]+l[i+2:]) # should we include 'e' in the Mult object?
-                    lawApplied=True
-                    break
-            if lawApplied==False:
-                print('Proof Error',f"Inverse laws can't be applied on line {lineNum}")
-            else:
-                self.steps += [newProducts]
-                self.justifications += [f'Right hand side inverse elimination on line {lineNum}'] 
-                self.show()
-        else:
-            print('Proof Error',f"It doesn't seem like line {lineNum} contains an equation")
         
 
     def inverseElimLHS(self,lineNum):
@@ -286,6 +283,7 @@ class Proof:
         if isinstance(evidence,Eq): 
             l = evidence.LHS.products.copy()
             lawApplied = False
+            print(l[-2],type(l[-2]),isinstance(l[-2],element))
             for i in range(len(l)-1):
                 if isinstance(l[i],element) and isinstance(l[i+1],inverse) and (l[i].elementName == l[i+1].elementName):
                     group = l[i].parentGroups[0] # how to deal with multiple groups?
@@ -563,7 +561,6 @@ class Proof:
         evidence = self.steps[lineNum]
         if isinstance(evidence,Eq): 
             l = evidence.RHS.products
-            print(type(l[0]),type(l[1]))
             l1=[]
             for i in range(len(l)-1):
                 # deals with the case a*1
@@ -961,6 +958,7 @@ class Proof:
         ev1 = self.steps[lineNum1]
         ev2 = self.steps[lineNum2]
         if isinstance(ev2, Eq):
+            #group equation
             if isinstance(ev1, Eq) and isinstance(ev1.LHS,Mult):
                 new_products_lhs = replacePower(ev1.LHS, ev2.RHS, ev2.LHS)
                 new_products_rhs = replacePower(ev1.RHS, ev2.RHS, ev2.LHS)
@@ -968,6 +966,7 @@ class Proof:
                 self.steps += [eq]
                 self.justifications += [f'Replaced all instances of {ev2.LHS} with {ev2.RHS} on line {lineNum1}']
                 self.show()
+            #integer equation
             elif isinstance(ev1, Eq) or isinstance(ev1, Inequality):
 
                 valueLHS = integerReplace(ev1.LHS, ev2.RHS, ev2.LHS)
@@ -1080,15 +1079,19 @@ class Proof:
         ineq1 = self.steps[lineNum1]
         ineq2 = self.steps[lineNum2]
         if isinstance(ineq1,Inequality) and isinstance(ineq2,Inequality):
+            if ineq1.LHS == ineq2.RHS and ineq1.RHS == ineq2.LHS:
+                if {ineq1.sign, ineq2.sign} in [{"<="}, {">="}]:
+                    
+                    self.steps += [Eq(ineq1.LHS, ineq1.RHS,self.allgroup)]
+                    self.justifications += [f"solve inequality from line{lineNum1} and line{lineNum2}"] 
+                    self.show()
 
-            if ineq1.LHS == ineq2.LHS and ineq1.RHS == ineq2.LHS:
-                if [ineq1.sign, ineq2.sign] in [["<=",">="],[">=","<="]]:
-                    print("yes")
-            #elif ineq1.LHS == ineq2.RHS and 
-
-            # elif ineq1.RHS == ineq2.LHS:
-            #     print ("yes")
-            #     if [ineq1.sign, ineq2.sign] in [[">=",">="],["<=","<="]]:
-            #         print ("yes")
+            elif ineq1.LHS == ineq2.LHS and ineq1.RHS == ineq2.RHS:
+                if {ineq1.sign, ineq2.sign} =={"<=",">="}:    
+                    self.steps += [Eq(ineq1.LHS, ineq1.RHS,self.allgroup)]
+                    self.justifications += [f"solve inequality from line{lineNum1} and line{lineNum2}"] 
+                    self.show()
+            else:
+                print("can't solve")
         else:
             print("not inequality")

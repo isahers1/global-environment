@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Proof Form</title>
+  </head>
+  <body>
+    Create a new proof
+    <form action="{{ url_for('proof') }}" method="post">
+      <label for="proof_name">Proof Name:</label>
+      <input type="text" name="proof_name" id="proof_name"><br>
+      <label for="group_name">Group Name:</label>
+      <input type="text" name="group_name" id="group_name"><br>
+      <label for="group_operation">Group Operation:</label>
+      <input type="text" name="group_operation" id="group_operation"><br>
+      <label for="goal">Goal:</label>
+      <input type="text" name="goal" id="goal"><br>
+      <label for="assumption">Assumption:</label>
+      <input type="text" name="assumption" id="assumption"><br>
+      <input type="submit" value="Save">
+    </form>
+  </body>
+</html>

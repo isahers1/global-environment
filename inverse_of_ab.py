@@ -1,5 +1,5 @@
-from enum import unique
-from telnetlib import GA
+# from enum import unique
+# from telnetlib import GA
 from proof import *
 from element import *
 from group import *

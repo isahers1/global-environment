@@ -1,0 +1,303 @@
+<html>
+  <head>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+
+      
+      $(document).ready(function() {
+        // run python code
+        function run(){
+          $.ajax({
+            type: "POST",
+            url: "/run_code",
+            data: { code: $("#code").val() },
+            success: function(output) {
+              $("#output").val(output);
+            }
+          });
+        }
+
+        run();
+
+        // create a new proof
+        var proofName = "{{ proof_name|safe }}";
+        var proofGroup = "{{group_name|safe}}";
+        var groupOperation = "{{group_operation|safe}}";
+        var goal = "{{goal|safe}}";
+        var assumption = "{{assumption|safe}}";
+        var startingCode = "from proof import * \nfrom element import * \nfrom group import * \nfrom integer import * \nfrom logicObjects import * \n";
+        startingCode = startingCode + `G = group("${proofGroup}","${groupOperation}") \np = Proof("${proofName}",${assumption}, goal = ${goal})\np.interface = True`;
+        $('#code').val(startingCode);
+
+        // sidenav code
+        var dropdown = document.getElementsByClassName("dropdown-btn");
+        var i;
+
+        for (i = 0; i < dropdown.length; i++) {
+        dropdown[i].addEventListener("click", function() {
+            this.classList.toggle("active");
+            var dropdownContent = this.nextElementSibling;
+            if (dropdownContent.style.display === "block") {
+            dropdownContent.style.display = "none";
+            } else {
+            dropdownContent.style.display = "block";
+            }
+        });
+        }
+
+        // element list
+        var elements = [];
+        function updateElement(){
+            $('#elements').html(elements.join(', '));
+        }
+
+        //group list
+        var groups = [];
+        function updateGroup(){
+          $('#group').html(groups.join(', '));
+        }
+
+      // save new group
+      $("#new-group-save").click(function() {
+        var currentCode = $('#code').val();
+        var newGroupName = $("#new-group-name").val();
+        newLine = "p.introGroup("+newGroupName+")";
+        var newCode = currentCode + "\n" + newLine;
+        $('#code').val(newCode);
+        groups.push(newGroupName)
+        updateGroup()
+        run();
+      })
+
+      //save new element
+      $("#new-element-save").click(function() {
+        var currentCode = $('#code').val();
+        var newElementName = $("#new-element-name").val();
+        var newElementGroupName = $("#new-element-group-name").val();
+        newLine = `p.introElement(${newElementGroupName},"${newElementName}")`;
+        var newCode = currentCode + "\n" + newLine;
+        $('#code').val(newCode);
+        elements.push(newElementName);
+        updateElement();
+        run();
+      })
+
+      //save closure
+      $("#closure-save").click(function() {
+        var currentCode = $('#code').val();
+        var element1 = $("#closure-element-1").val();
+        var element2 = $("#closure-element-2").val();
+        newLine = `p.closure(G,${element1},"${element2}")`;
+        var newCode = currentCode + "\n" + newLine;
+        $('#code').val(newCode);
+        run();
+      })
+
+      // group selection tag
+      var group_selection = document.getElementsByClassName('group-selection');
+      for (var i = 0; i < group_selection.length; i++) {
+        var current_selection = group_selection[i];
+        current_selection.addEventListener('click', function() {
+          group_selection_function(group_selection[i]);
+    });
+  }
+
+  function group_selection_function(selection_tag) {
+    selection_tag.innerHTML = '';
+    groups.forEach(function(item) {
+    var option = document.createElement('option');
+    option.value = item;
+    option.textContent = item;
+    selection_tag.appendChild(option);
+  });
+  }
+
+  // element selection tag
+  // var element_selection = document.getElementsByClassName('element-selection');
+  //     for (var i = 0; i < element_selection.length; i++) {
+  //       var current_selection = element_selection[i];
+  //       element_selection[i].addEventListener('click', function() {
+  //         element_selection_function(current_selection);
+  //   });
+  // }
+
+  // var element_selection = document.getElementsByClassName('element-selection');
+  //     for (var i = 0; i < element_selection.length; i++) {
+  //       var current_selection = element_selection[i];
+  //       element_selection[i].addEventListener('click', function() {
+  //         element_selection_function(current_selection);
+  //   });
+  // }
+
+  // function element_selection_function(selection_tag) {
+  //   selection_tag.innerHTML = '';
+  //   elements.forEach(function(item) {
+  //   var option = document.createElement('option');
+  //   option.value = item;
+  //   option.textContent = item;
+  //   selection_tag.appendChild(option);
+  // });
+  // }
+
+    })
+
+
+    </script>
+
+<style type="text/css">
+    .container {
+        width: 100%;
+        height: 100vh;
+    }
+    .left {
+        float: left;
+        width: 50%;
+        height: 100%;
+        background-color: #ffffff;
+    }
+
+    .sidenav {
+        float: right;
+        width: 50%;
+        height: 100%;
+        background-color: #65ffa8;
+        z-index: 1;
+        background-color: #b6b6b6;
+        overflow-x: hidden;
+        padding-top: 20px;
+    }
+
+/* Style the sidenav links and the dropdown button */
+.sidenav a, .dropdown-btn {
+  padding: 6px 8px 6px 16px;
+  text-decoration: none;
+  font-size: 20px;
+  color: #000000;
+  display: block;
+  border: none;
+  background: none;
+  width:100%;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+}
+
+/* On mouse-over */
+.sidenav a:hover, .dropdown-btn:hover {
+  color: #f1f1f1;
+}
+
+/* Main content */
+.main {
+  margin-left: 200px; /* Same as the width of the sidenav */
+  font-size: 20px; /* Increased text to enable scrolling */
+  padding: 0px 10px;
+}
+
+/* Add an active class to the active dropdown button */
+.active {
+  background-color: rgb(129, 129, 129);
+  color: white;
+}
+
+/* Dropdown container (hidden by default). Optional: add a lighter background color and some left padding to change the design of the dropdown content */
+.dropdown-container {
+  display: none;
+  background-color: #9e9e9e;
+  padding-left: 8px;
+}
+
+/* Optional: Style the caret down icon */
+.fa-caret-down {
+  float: right;
+  padding-right: 8px;
+}
+
+.proof-method {
+  display: none;
+}
+
+
+
+</style>
+
+  </head>
+  <body>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+
+    <div class = "container">
+        <div class = "left">
+            <h1>Your proof is here</h1>
+            <textarea id="code" style = "display: none;"></textarea>
+            <textarea id="output" readonly></textarea>
+          </div>
+          <div class = "sidenav">
+            <button class="dropdown-btn">My proof
+              <i class="fa fa-caret-down"></i>
+            </button>
+            <div class="dropdown-container">
+                <h1>{{ proof_name }}</h1>
+                <p><strong>Group Name:</strong> {{ group_name }}</p>
+                <p><strong>Group Operation:</strong> {{ group_operation }}</p>
+                <p><strong>Goal:</strong> {{ goal }}</p>
+                <p><strong>Assumption:</strong> {{ assumption }}</p>
+            </div>
+
+            <button class="dropdown-btn">Group
+                <i class="fa fa-caret-down"></i>
+              </button>
+              <div class="dropdown-container" id="group">
+                No group now
+              </div>
+
+              <button class="dropdown-btn">Element
+                <i class="fa fa-caret-down"></i>
+              </button>
+              <div class="dropdown-container" id="elements">
+                No element now
+              </div>
+
+              <button class="dropdown-btn">Proof Steps
+                <i class="fa fa-caret-down"></i>
+              </button>
+              <div class="dropdown-container">
+
+                <button class="dropdown-btn">Create a new group</button>
+                <div class = "proof-method">
+                group name
+                <textarea id="new-group-name"></textarea>
+                <button id="new-group-save">Save</button>
+              </div>
+
+              <button class="dropdown-btn">Create a new element</button>
+                <div class = "proof-method">
+                group name
+                <select id ="new-element-group-name" class = "group-selection">
+                </select>
+                <!-- <textarea id = "new-element-group-name"></textarea> -->
+                element name
+                <textarea id = "new-element-name">g</textarea>
+                <button id="new-element-save">Save</button>
+                </div>
+              
+              <button class = "dropdown-btn">Closure</button>
+              <div class = "proof-method">
+                element name 1
+                <select id="closure-element-1" class = "element-selection">
+                </select>
+                element name 2
+                <select id="closure-element-2" class = "element-selection">
+                </select>
+                <button id="closure-save">Save</button>
+              </div>
+
+
+          </div>
+    </div>
+    
+
+
+    </div>  
+  </body>
+</html>

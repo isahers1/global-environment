@@ -6,7 +6,10 @@ class integer:
         self.value = input
     
     def __repr__(self):
-        return self.value
+        if isinstance(self.value, str) == True:
+            return self.value
+        else:
+            return str(self.value)
 
 
     def __mul__(self,other):
@@ -32,8 +35,16 @@ class integer:
         return integer(self, inputnew)
 
     def __eq__(self, other):
-        self_string=self.value
-        other_string=other.value
+        if isinstance(self.value,str):
+            self_string = self.value
+        else:
+            self_string = str(self.value)
+        
+        if isinstance(other.value,str):
+            other_string = other.value
+        else:
+            other_string = str(other.value)
+            
         if self_string==other_string:
             return True 
         elif len(self_string)==len(other_string):

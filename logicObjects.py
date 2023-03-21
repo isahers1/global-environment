@@ -157,6 +157,9 @@ class Eq:
         else: 
             return False
 
+    def replace(self, var, expr):
+        return Eq(self.LHS.replace(var,expr), self.RHS.replace(var,expr), self.group)
+
 class Inequality:
     def __init__(self,LHS,RHS,sign):
         self.LHS = LHS
@@ -164,7 +167,6 @@ class Inequality:
         self.sign = sign
 
     def __repr__(self):
-        print(self.LHS.value)
         return str(self.LHS) + self.sign + str(self.RHS)
     
     def toLaTeX(self):
@@ -206,7 +208,6 @@ class forall:
         if not isinstance(other,forall):
             return False
         if len(self.arbelems)==len(other.arbelems):
-            print(self,other)
             new = copy.deepcopy(self)
             replaced = new.replace(other.arbelems)
             return replaced == other.eq
@@ -291,7 +292,7 @@ class inverse(element):
                 element = pg.elements[elementName]
             else:
                 element = None
-            inverseName = elementName + "^(-1)"
+            inverseName = elementName + " ^ (-1)"
         else:
             element = object
             elementName = repr(object)
@@ -306,6 +307,7 @@ class inverse(element):
         self.group = pg
         if str(self) not in pg.elements:
             pg.elements.update({str(self):self})
+
     def __repr__(self):
         return self.inverseName
          # self or elementName?

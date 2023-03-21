@@ -1,5 +1,5 @@
-from enum import unique
-from telnetlib import GA
+# from enum import unique
+# from telnetlib import GA
 from proof import *
 from element import *
 from group import *
@@ -7,7 +7,7 @@ from integer import *
 from logicObjects import *
 
 G = group('G','*')
-order_of_inverse = forall(['a'], G, Eq(Order('a'),inverse('a',G),G))
+order_of_inverse = forall(['a'], G, Eq(Order('a'),Order(inverse('a',G)),G))
 
 p = Proof('Order Proof', assumption = None, goal = order_of_inverse)
 p.introGroup(G)
@@ -43,6 +43,4 @@ p.powerSimplifyLeft(24)
 p.identifyOrder(25)
 p.substituteIntegerLHS(26,17)
 p.solveInequality(27, 15)
-
-#identify order
-#replace function
+p.forAllIntroduction(28,['a'],[1])

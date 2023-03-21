@@ -1,8 +1,8 @@
 exec(compile(source=open('integer.py').read(), filename='integer.py', mode='exec'))
 exec(compile(source=open('element.py').read(), filename='element.py', mode='exec'))
 
-from integer import integer
-from logicObjects import Mult
+from integer import *
+from logicObjects import *
 ##need to deal with operations with one variable and an actual int (ex. x+2 or e^x*e^2)
 ##subtypes/subclasses? a power object is also a mult object which is also an element. 
 
